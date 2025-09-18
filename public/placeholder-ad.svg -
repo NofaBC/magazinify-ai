@@ -1,0 +1,23 @@
+
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#fefefe"/>
+  
+  <!-- Border -->
+  <rect x="1" y="1" width="798" height="598" stroke="#e5e7eb" stroke-width="2" stroke-dasharray="8,4" fill="none"/>
+  
+  <!-- Ad Icon -->
+  <g transform="translate(375, 275)">
+    <rect x="0" y="0" width="50" height="50" rx="25" fill="#f59e0b" opacity="0.1"/>
+    <rect x="10" y="10" width="30" height="30" rx="15" fill="#f59e0b" opacity="0.2"/>
+    <text x="25" y="30" text-anchor="middle" fill="#f59e0b" font-family="Arial, sans-serif" font-size="16" font-weight="bold">AD</text>
+  </g>
+  
+  <!-- Text -->
+  <text x="400" y="360" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="20" font-weight="600">
+    Advertisement Slot
+  </text>
+  <text x="400" y="385" text-anchor="middle" fill="#9ca3af" font-family="Arial, sans-serif" font-size="14">
+    800 × 600 pixels
+  </text>
+</svg>
