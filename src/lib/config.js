@@ -1,126 +1,102 @@
-// Environment configuration for Magazinify AI
-
+// Environment configuration
 export const config = {
-  // API Configuration
-  api: {
-    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
-  },
-
-  // Database Configuration (Firebase)
+  // Firebase configuration
   firebase: {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
   },
 
-  // OpenAI Configuration
+  // OpenRouter/OpenAI configuration
   openai: {
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
-    model: 'gpt-4o-mini',
-    maxTokens: 4000,
+    apiKey: import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_OPENAI_API_KEY,
+    baseUrl: import.meta.env.VITE_OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+    model: 'openai/gpt-4o-mini',
+    maxTokens: 2000,
   },
 
-  // Vercel Blob Configuration
+  // Vercel Blob configuration
   blob: {
-    token: import.meta.env.VITE_BLOB_READ_WRITE_TOKEN || '',
+    token: import.meta.env.VITE_BLOB_READ_WRITE_TOKEN,
   },
 
-  // Application Configuration
+  // Application configuration
   app: {
-    name: 'Magazinify AI™',
-    version: '1.0.0',
-    defaultSubdomain: 'app',
     baseUrl: import.meta.env.VITE_APP_BASE_URL || 'http://localhost:5173',
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5173/api',
+    name: 'Magazinify AI™',
+    description: 'AI-Powered Magazine Publishing Platform',
   },
 
-  // Plan Configuration
+  // Feature flags
+  features: {
+    aiGeneration: true,
+    analytics: true,
+    customDomains: true,
+    multiTenant: true,
+  },
+
+  // Plan configurations
   plans: {
     basic: {
       name: 'Basic',
-      maxPages: 12,
-      customDomain: false,
-      premiumTemplates: false,
-      advancedAnalytics: false,
-      videoAudioEmbeds: false,
-      maxAdSlots: 2,
-      teamRoles: false,
-      maxMagazines: 1,
+      price: 29,
+      features: [
+        'Up to 12 pages per issue',
+        'Basic templates',
+        'Shared subdomain',
+        'Basic analytics',
+        'Email support'
+      ],
+      limits: {
+        maxPages: 12,
+        maxIssuesPerMonth: 1,
+        customDomain: false,
+        advancedAnalytics: false,
+      }
     },
     pro: {
       name: 'Pro',
-      maxPages: 12,
-      customDomain: true,
-      premiumTemplates: true,
-      advancedAnalytics: true,
-      videoAudioEmbeds: true,
-      maxAdSlots: 5,
-      teamRoles: false,
-      maxMagazines: 1,
+      price: 79,
+      features: [
+        'Up to 24 pages per issue',
+        'Premium templates',
+        'Custom domain',
+        'Advanced analytics',
+        'Video/audio embeds',
+        'Priority support'
+      ],
+      limits: {
+        maxPages: 24,
+        maxIssuesPerMonth: 4,
+        customDomain: true,
+        advancedAnalytics: true,
+      }
     },
     customize: {
       name: 'Customize',
-      maxPages: 24,
-      customDomain: true,
-      premiumTemplates: true,
-      advancedAnalytics: true,
-      videoAudioEmbeds: true,
-      maxAdSlots: -1, // unlimited
-      teamRoles: true,
-      maxMagazines: -1, // unlimited
-    },
-  },
-
-  // Default Blueprint Configuration
-  defaultBlueprint: {
-    brand: {
-      colors: {
-        primary: '#2563eb',
-        secondary: '#64748b',
-        accent: '#f59e0b',
-      },
-      fonts: {
-        heading: 'Inter',
-        body: 'Inter',
-      },
-    },
-    voice: {
-      tone: 'professional',
-      style: 'informative',
-      keywords: [],
-    },
-    defaultPageCount: 8,
-    sections: [
-      { id: 'cover', name: 'Cover Page', type: 'cover', order: 1 },
-      { id: 'toc', name: 'Table of Contents', type: 'toc', order: 2 },
-      { id: 'feature', name: 'Feature Article', type: 'article', order: 3 },
-      { id: 'news', name: 'News & Updates', type: 'news', order: 4 },
-      { id: 'insights', name: 'Industry Insights', type: 'article', order: 5 },
-      { id: 'back-cover', name: 'Back Cover', type: 'back-cover', order: 6 },
-    ],
-    adSlots: [
-      { key: 'p4', page: 4, position: 'full-page', dimensions: { width: 800, height: 1200 } },
-      { key: 'p10', page: 10, position: 'half-page', dimensions: { width: 800, height: 600 } },
-    ],
-  },
-};
-
-// Feature flags based on plan
-export const getFeatureFlags = (plan) => {
-  const planConfig = config.plans[plan] || config.plans.basic;
-  
-  return {
-    customDomain: planConfig.customDomain,
-    premiumTemplates: planConfig.premiumTemplates,
-    advancedAnalytics: planConfig.advancedAnalytics,
-    videoAudioEmbeds: planConfig.videoAudioEmbeds,
-    teamRoles: planConfig.teamRoles,
-    maxPages: planConfig.maxPages,
-    maxAdSlots: planConfig.maxAdSlots,
-    maxMagazines: planConfig.maxMagazines,
-  };
+      price: 199,
+      features: [
+        'Unlimited pages',
+        'Custom templates',
+        'Multiple magazines',
+        'Team collaboration',
+        'White-label options',
+        'Dedicated support'
+      ],
+      limits: {
+        maxPages: -1, // unlimited
+        maxIssuesPerMonth: -1, // unlimited
+        customDomain: true,
+        advancedAnalytics: true,
+        multiMagazine: true,
+        teamRoles: true,
+      }
+    }
+  }
 };
 
 export default config;
