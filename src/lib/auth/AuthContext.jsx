@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authService, dbService } from '../database/firebase.js';
+import { authHelpers, dbService } from '../database/firebase.js';
 
 const AuthContext = createContext({});
 
@@ -13,42 +13,24 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
   const [tenant, setTenant] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
+    const unsubscribe = authHelpers.onAuthStateChanged(async (firebaseUser) => {
       try {
         if (firebaseUser) {
           setUser(firebaseUser);
           
-          // Fetch user profile from Firestore
-          try {
-            const profile = await dbService.users.getById(firebaseUser.uid);
-            setUserProfile(profile);
-            
-            // Fetch tenant information
-            if (profile.tenantId) {
-              const tenantData = await dbService.tenants.getById(profile.tenantId);
-              setTenant(tenantData);
-            }
-          } catch (profileError) {
-            console.error('Error fetching user profile:', profileError);
-            // User exists in Firebase Auth but not in Firestore
-            // This might happen during the signup process
-            setUserProfile(null);
-            setTenant(null);
-          }
+          // Get user's tenant information
+          const userTenant = await getUserTenant(firebaseUser.uid);
+          setTenant(userTenant);
         } else {
           setUser(null);
-          setUserProfile(null);
           setTenant(null);
         }
-      } catch (err) {
-        console.error('Auth state change error:', err);
-        setError(err.message);
+      } catch (error) {
+        console.error('Error in auth state change:', error);
       } finally {
         setLoading(false);
       }
@@ -57,18 +39,31 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
+  const getUserTenant = async (userId) => {
+    try {
+      // This would typically query a users collection to get tenant association
+      // For now, we'll return a mock tenant
+      return {
+        id: 'tenant_1',
+        name: 'Demo Tenant',
+        plan: 'basic',
+        slug: 'demo-tenant',
+        customDomain: null
+      };
+    } catch (error) {
+      console.error('Error getting user tenant:', error);
+      return null;
+    }
+  };
+
   const signUp = async (email, password, userData) => {
     try {
-      setError(null);
       setLoading(true);
-      
-      const firebaseUser = await authService.signUp(email, password, userData);
-      
-      // The user profile will be set by the auth state change listener
-      return firebaseUser;
-    } catch (err) {
-      setError(err.message);
-      throw err;
+      const user = await authHelpers.signUp(email, password, userData);
+      return user;
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -76,78 +71,38 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
-      setError(null);
       setLoading(true);
-      
-      const firebaseUser = await authService.signIn(email, password);
-      return firebaseUser;
-    } catch (err) {
-      setError(err.message);
-      throw err;
+      const user = await authHelpers.signIn(email, password);
+      return user;
+    } catch (error) {
+      console.error('Sign in error:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const signOut = async () => {
+  const logout = async () => {
     try {
-      setError(null);
-      await authService.signOut();
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
-  };
-
-  const updateProfile = async (updates) => {
-    try {
-      setError(null);
-      
-      if (userProfile?.id) {
-        const updatedProfile = await dbService.users.update(userProfile.id, updates);
-        setUserProfile(updatedProfile);
-        return updatedProfile;
-      }
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
-  };
-
-  const updateTenant = async (updates) => {
-    try {
-      setError(null);
-      
-      if (tenant?.id) {
-        const updatedTenant = await dbService.tenants.update(tenant.id, updates);
-        setTenant(updatedTenant);
-        return updatedTenant;
-      }
-    } catch (err) {
-      setError(err.message);
-      throw err;
+      setLoading(true);
+      await authHelpers.signOut();
+      setUser(null);
+      setTenant(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const value = {
-    // Auth state
     user,
-    userProfile,
     tenant,
     loading,
-    error,
-    
-    // Auth methods
     signUp,
     signIn,
-    signOut,
-    updateProfile,
-    updateTenant,
-    
-    // Helper methods
-    isAuthenticated: !!user,
-    isProfileComplete: !!userProfile,
-    hasTenant: !!tenant,
+    logout
   };
 
   return (
@@ -157,4 +112,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export default AuthContext;
+export default AuthProvider;
