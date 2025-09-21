@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "magazinify-ai",
   "builds": [
     {
       "src": "package.json",
@@ -12,100 +11,11 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
       "dest": "/index.html"
-    }
-  ],
-  "env": {
-    "VITE_FIREBASE_API_KEY": "@firebase-api-key",
-    "VITE_FIREBASE_AUTH_DOMAIN": "@firebase-auth-domain",
-    "VITE_FIREBASE_PROJECT_ID": "@firebase-project-id",
-    "VITE_FIREBASE_STORAGE_BUCKET": "@firebase-storage-bucket",
-    "VITE_FIREBASE_MESSAGING_SENDER_ID": "@firebase-messaging-sender-id",
-    "VITE_FIREBASE_APP_ID": "@firebase-app-id",
-    "VITE_OPENAI_API_KEY": "@openai-api-key",
-    "VITE_VERCEL_BLOB_READ_WRITE_TOKEN": "@vercel-blob-token"
-  },
-  "functions": {
-    "app/api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/blueprints",
-      "destination": "/api/blueprints/index.js"
-    },
-    {
-      "source": "/api/issues/generate",
-      "destination": "/api/issues/generate.js"
-    },
-    {
-      "source": "/api/issues/regenerate-article",
-      "destination": "/api/issues/regenerate-article.js"
-    },
-    {
-      "source": "/api/issues/update",
-      "destination": "/api/issues/update.js"
-    },
-    {
-      "source": "/api/issues/ads",
-      "destination": "/api/issues/ads.js"
-    },
-    {
-      "source": "/api/issues/publish",
-      "destination": "/api/issues/publish.js"
-    },
-    {
-      "source": "/api/public/issue",
-      "destination": "/api/public/issue.js"
-    },
-    {
-      "source": "/api/public/article",
-      "destination": "/api/public/article.js"
-    },
-    {
-      "source": "/api/public/latest",
-      "destination": "/api/public/latest.js"
-    },
-    {
-      "source": "/api/public/archive",
-      "destination": "/api/public/archive.js"
-    },
-    {
-      "source": "/api/analytics/ingest",
-      "destination": "/api/analytics/ingest.js"
-    },
-    {
-      "source": "/api/analytics/summary",
-      "destination": "/api/analytics/summary.js"
-    },
-    {
-      "source": "/api/analytics/detailed",
-      "destination": "/api/analytics/detailed.js"
     }
   ]
 }
