@@ -1,4 +1,5 @@
 cat > src/app/layout.tsx << 'EOF'
+// src/app/layout.tsx
 export const metadata = { title: "Magazinify AI™" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
