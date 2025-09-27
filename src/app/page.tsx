@@ -1,3 +1,4 @@
+cat > src/app/page.tsx << 'EOF'
 // src/app/page.tsx
 export default function Page() {
   return (
@@ -8,3 +9,4 @@ export default function Page() {
     </main>
   );
 }
+EOF
