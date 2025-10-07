@@ -1,0 +1,24 @@
+<!-- public/logo.svg -->
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Magazinify AI logo">
+  <!-- Background rounded square with subtle gradient -->
+  <defs>
+    <linearGradient id="g" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8"/>
+      <stop offset="1" stop-color="#0EA5E9"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#g)"/>
+
+  <!-- Stylized 'M' as two folded magazine pages -->
+  <!-- Left page -->
+  <path d="M16 44V20a2 2 0 0 1 2-2h6.5a4 4 0 0 1 3.1 1.5l3.4 4.2a2 2 0 0 0 3.1 0l3.4-4.2A4 4 0 0 1 40.6 18H47a2 2 0 0 1 2 2v24a2 2 0 0 1-2 2h-6.8a4 4 0 0 1-3.1-1.5l-3.4-4.3a2 2 0 0 0-3.1 0l-3.4 4.3a4 4 0 0 1-3.1 1.5H18a2 2 0 0 1-2-2Z" fill="white" opacity="0.96"/>
+
+  <!-- Center cut to emphasize page fold (knockout) -->
+  <path d="M32 24c.6 0 1.2.27 1.6.73l3.8 4.2c.42.47 1.15.47 1.58 0l3.7-4.25c.38-.44.94-.7 1.53-.7H47v16h-3.8c-.6 0-1.18-.27-1.56-.74L38 31.1a1.1 1.1 0 0 0-1.7 0l-3.6 4.18c-.38.44-.95.7-1.54.7H18V24h2.9c.59 0 1.16.26 1.54.7l3.66 4.23c.42.49 1.18.49 1.6 0l3.8-4.2c.4-.46 1-.73 1.6-.73Z" fill="#0EA5E9" opacity=".12"/>
+
+  <!-- Small sparkle/star to hint “AI”/generation -->
+  <g transform="translate(46 12)">
+    <path d="M4 0l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" fill="white" opacity=".9"/>
+  </g>
+</svg>
