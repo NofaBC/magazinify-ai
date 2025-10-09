@@ -32,7 +32,7 @@
         <a href="#faq" class="text-white/80 hover:text-white">FAQ</a>
       </nav>
       <div class="flex items-center gap-3">
-        <a href="/viewer.html" class="hidden sm:inline-block rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/5">View Demo</a>
+        <a href="/viewer" class="hidden sm:inline-block rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/5">View Demo</a>
         <a href="#get-started" class="inline-block rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-white/90">Get Started</a>
       </div>
     </div>
@@ -55,24 +55,12 @@
         </p>
         <div class="mt-8 flex flex-wrap items-center gap-3">
           <a href="#get-started" class="rounded-xl bg-sky-400 px-5 py-3 font-semibold text-slate-950 hover:bg-sky-300">Start for $499 Setup</a>
-          <a href="/viewer.html" class="rounded-xl border border-white/20 px-5 py-3 hover:bg-white/5">See a Flipbook Demo</a>
+          <a href="/viewer" class="rounded-xl border border-white/20 px-5 py-3 hover:bg-white/5">See a Flipbook Demo</a>
         </div>
         <p class="mt-4 text-sm text-white/60">Includes $499 one-time setup. Monthly plans from $19–$99.</p>
       </div>
     </div>
   </section>
-
-  <!-- Logos / credibility (optional)
-  <section class="mx-auto max-w-7xl px-6 py-8">
-    <p class="text-center text-white/60 text-sm">Trusted by growing brands</p>
-    <div class="mt-4 grid grid-cols-2 md:grid-cols-5 gap-6 opacity-70">
-      <img src="/logos/1.svg" alt="" class="mx-auto h-8" />
-      <img src="/logos/2.svg" alt="" class="mx-auto h-8" />
-      <img src="/logos/3.svg" alt="" class="mx-auto h-8" />
-      <img src="/logos/4.svg" alt="" class="mx-auto h-8" />
-      <img src="/logos/5.svg" alt="" class="mx-auto h-8" />
-    </div>
-  </section> -->
 
   <!-- How it works -->
   <section id="how" class="mx-auto max-w-7xl px-6 py-20">
@@ -102,7 +90,7 @@
   </section>
 
   <!-- Business-first CTA strip -->
-  <section class="mx-auto max-w-7xl px-6">
+  <section class="mx-auto max-w-7xl px-6 py-12">
     <div class="rounded-2xl border border-white/10 bg-gradient-to-r from-sky-400/10 to-sky-400/5 p-6 sm:p-10">
       <h3 class="text-xl font-semibold">This is not a generic publication.</h3>
       <p class="mt-2 text-white/80">Every magazine is built for <strong>one business</strong> with deep linking to <strong>that business's website</strong>.</p>
@@ -158,7 +146,7 @@
       <form class="mt-6 grid gap-4 sm:grid-cols-2" onsubmit="handleSubmit(event)">
         <div class="sm:col-span-1">
           <label class="block text-sm text-white/70">Business Name</label>
-          <input class="mt-1 w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 outline-none placeholder:text-white/40" placeholder="VisionWing Studio" required />
+          <input id="businessName" class="mt-1 w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 outline-none placeholder:text-white/40" placeholder="VisionWing Studio" required />
         </div>
         <div class="sm:col-span-1">
           <label class="block text-sm text-white/70">Website URL</label>
@@ -166,10 +154,10 @@
         </div>
         <div class="sm:col-span-2">
           <label class="block text-sm text-white/70">Industry / Niche</label>
-          <input class="mt-1 w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 outline-none placeholder:text-white/40" placeholder="Real estate, coaching, wellness..." />
+          <input id="industry" class="mt-1 w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 outline-none placeholder:text-white/40" placeholder="Real estate, coaching, wellness..." />
         </div>
         <div class="sm:col-span-2">
-          <button class="w-full rounded-xl bg-sky-400 px-4 py-3 font-semibold text-slate-900 hover:bg-sky-300">Continue</button>
+          <button type="submit" class="w-full rounded-xl bg-sky-400 px-4 py-3 font-semibold text-slate-900 hover:bg-sky-300">Continue</button>
         </div>
         <p class="sm:col-span-2 text-center text-xs text-white/50">By continuing you agree to our Terms & Privacy.</p>
       </form>
@@ -179,7 +167,7 @@
   <!-- Footer with website emphasis -->
   <footer class="border-t border-white/10">
     <div class="mx-auto max-w-7xl px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <p class="text-white/60 text-sm">© <span id="y"></span> Magazinify AI™</p>
+      <p class="text-white/60 text-sm">© <span id="year"></span> Magazinify AI™</p>
       <p class="text-white/60 text-sm">
         Every issue includes clear CTAs to your site. <a href="#get-started" class="underline decoration-sky-400/60 hover:text-white">Add your website</a>
       </p>
@@ -187,7 +175,8 @@
   </footer>
 
   <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
+    document.getElementById('year').textContent = new Date().getFullYear();
+    
     function handleSubmit(e) {
       e.preventDefault();
       const url = document.getElementById('websiteUrl').value.trim();
@@ -195,7 +184,7 @@
         alert('Please enter a full website URL including https://');
         return;
       }
-      // Example: redirect to your signup/checkout with website attached
+      // Redirect to signup with website parameter
       const params = new URLSearchParams({ website: url });
       window.location.href = "/signup?" + params.toString();
     }
