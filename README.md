@@ -1,19 +1,23 @@
-# Magazinify AI™ — MVP
-Static landing + viewer demo.
+# Magazinify AI™
 
-## Files
-- `index.html` — landing page (Tailwind CDN)
-- `viewer.html` — flipbook-style preview with Print/Download
-- `signup.html` — captures `?website=` and shows a stub form
-- `logo.svg`, `favicon.ico`, `hero-texture.jpg`, `og-cover.jpg` — assets
+AI-powered SaaS that generates business-branded, interactive magazine PDFs from a business website.
 
-## Deploy (Vercel)
-- New Project → Import repo
-- Framework: **Other**
-- Build Command: *(empty)*
-- Output Directory: **/**
+## Tech Stack
+- **Frontend:** Static HTML + Tailwind CDN
+- **Backend:** Vercel Serverless Functions (Node.js + TypeScript)
+- **Database:** Firebase Firestore (coming in Brick 2)
+- **Payments:** Stripe (coming in Brick 4)
+- **PDF Generation:** pdf-lib
 
-## Next
-1) Add `/api/generate` serverless route returning a real PDF.
-2) Wire landing → generation pipeline (ingest → layout → render).
-3) Replace viewer demo with generated content.
+## Current Status: Brick 1 Complete ✅
+- ✅ Landing page with pricing
+- ✅ PDF viewer with generation
+- ✅ Signup form
+- ✅ Health check API
+- ✅ Sync PDF generation API
+
+## Setup
+
+1. Install dependencies:
+```bash
+npm install
