@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magazine Preview - Magazinify AI™</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <a href="/" class="inline-flex items-center gap-2 text-sky-400 hover:text-sky-300 mb-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Back to Home
+                </a>
+                <h1 class="text-3xl font-bold text-white">Magazine Preview</h1>
+                <p class="mt-2 text-white/70">Generate an AI-powered business magazine instantly</p>
+            </div>
+            
+            <!-- Generation Form -->
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4">Generate Preview</h2>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <input 
+                        type="url" 
+                        id="websiteInput"
+                        placeholder="Enter website URL (e.g., https://example.com)"
+                        class="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/40 focus:ring-2 focus:ring-sky-400 focus:border-transparent outline-none"
+                    >
+                    <button 
+                        onclick="generatePreview()"
+                        id="generateBtn"
+                        class="px-6 py-3 bg-sky-400 text-slate-900 font-semibold rounded-lg hover:bg-sky-300 transition-colors"
+                    >
+                        Generate
+                    </button>
+                </div>
+                <div id="status" class="mt-4 text-sm"></div>
+            </div>
+
+            <!-- PDF Preview -->
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Preview</h2>
+                    <button 
+                        onclick="downloadPDF()"
+                        id="downloadBtn"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        disabled
+                    >
+                        Download PDF
+                    </button>
+                </div>
+                
+                <div id="pdfContainer" class="border-2 border-dashed border-white/20 rounded-lg p-12 text-center text-white/50 min-h-[400px] flex items-center justify-center">
+                    <div>
+                        <svg class="w-16 h-16 mx-auto mb-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p class="text-lg">Enter a website URL and click Generate</p>
+                        <p class="text-sm mt-2">to see your AI-generated magazine preview</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPdfBlob = null;
+
+        // Get website from URL params and auto-generate
+        const urlParams = new URLSearchParams(window.location.search);
+        const websiteParam = urlParams.get('website');
+        if (websiteParam) {
+            document.getElementById('websiteInput').value = websiteParam;
+            setTimeout(() => generatePreview(), 500);
+        }
+
+        async function generatePreview() {
+            const websiteInput = document.getElementById('websiteInput');
+            const generateBtn = document.getElementById('generateBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const status = document.getElementById('status');
+            const pdfContainer = document.getElementById('pdfContainer');
+
+            const website = websiteInput.value.trim();
+            
+            if (!website) {
+                status.textContent = 'Please enter a website URL';
+                status.className = 'mt-4 text-sm text-red-400';
+                return;
+            }
+
+            // Validate URL
+            try {
+                new URL(website);
+            } catch {
+                status.textContent = 'Please enter a valid URL (include https://)';
+                status.className = 'mt-4 text-sm text-red-400';
+                return;
+            }
+
+            // Update UI
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating...';
+            downloadBtn.disabled = true;
+            status.textContent = 'Generating magazine preview... This may take a few seconds.';
+            status.className = 'mt-4 text-sm text-sky-400';
+            
+            pdfContainer.innerHTML = '<div class="flex items-center justify-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-400"></div></div>';
+
+            try {
+                const response = await fetch('/api/generate/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ website })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Generation failed: ${response.statusText}`);
+                }
+
+                // Get PDF blob
+                const pdfBlob = await response.blob();
+                currentPdfBlob = pdfBlob;
+
+                // Create PDF preview
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                pdfContainer.innerHTML = `
+                    <iframe 
+                        src="${pdfUrl}" 
+                        class="w-full h-[600px] border-0 rounded-lg"
+                        title="Magazine Preview"
+                    ></iframe>
+                `;
+
+                // Enable download
+                downloadBtn.disabled = false;
+                status.textContent = '✓ Preview generated successfully!';
+                status.className = 'mt-4 text-sm text-green-400';
+
+            } catch (error) {
+                console.error('Generation error:', error);
+                status.textContent = `Error: ${error.message}`;
+                status.className = 'mt-4 text-sm text-red-400';
+                pdfContainer.innerHTML = `
+                    <div class="text-center py-12">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-red-400">Failed to generate preview</p>
+                        <p class="text-white/50 text-sm mt-2">Please try again</p>
+                    </div>
+                `;
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generate';
+            }
+        }
+
+        function downloadPDF() {
+            if (!currentPdfBlob) return;
+
+            const url = URL.createObjectURL(currentPdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'magazinify-preview.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
