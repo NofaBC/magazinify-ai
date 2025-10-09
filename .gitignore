@@ -23,16 +23,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-# Editor directories and files
+# Editor directories
 .vscode/
 .idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
 .DS_Store
 
 # TypeScript
@@ -49,8 +43,7 @@ coverage/
 # Firebase
 .firebase/
 firebase-debug.log
-firestore-debug.log
 
-# PDFs (temporary generated files for testing)
+# PDFs (temporary)
 *.pdf
 !og-cover.pdf
