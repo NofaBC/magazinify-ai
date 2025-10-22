@@ -1,0 +1,86 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+    
+    function isTenantOwner(tenantId) {
+      return isAuthenticated() && 
+             request.auth.token.tenantId == tenantId;
+    }
+    
+    function isTenantMember(tenantId) {
+      return isAuthenticated() && 
+             (request.auth.token.tenantId == tenantId || request.auth.token.tenantAccess.keys().hasAny([tenantId]));
+    }
+    
+    function isPublishedIssue(tenantId, issueId) {
+      return firestore.exists(/databases/(default)/documents/tenants/$(tenantId)/issues/$(issueId)) &&
+             firestore.get(/databases/(default)/documents/tenants/$(tenantId)/issues/$(issueId)).data.status == 'published';
+    }
+    
+    function isFileSizeValid() {
+      return request.resource.size < 50 * 1024 * 1024; // 50 MB file size limit
+    }
+    
+    function isImageType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isPDFType() {
+      return request.resource.contentType == 'application/pdf';
+    }
+    
+    // Tenant isolated storage
+    match /tenants/{tenantId}/{allPaths=**} {
+      // Tenant owners can read and write to their tenant storage
+      allow read, write: if isTenantOwner(tenantId) || isAdmin();
+    }
+    
+    // Published magazine files can be read by anyone
+    match /tenants/{tenantId}/{issueId}/{fileName} {
+      allow read: if isPublishedIssue(tenantId, issueId) || isTenantOwner(tenantId) || isAdmin();
+    }
+    
+    // Published flipbook files can be read by anyone
+    match /tenants/{tenantId}/{issueId}/flipbook/{fileName} {
+      allow read: if isPublishedIssue(tenantId, issueId) || isTenantOwner(tenantId) || isAdmin();
+    }
+    
+    // Temp storage for processing
+    match /temp/{allPaths=**} {
+      // Temporary uploads can be read and written by authenticated users
+      allow read, write: if isAuthenticated() && isFileSizeValid();
+      
+      // Temporary AI-generated images
+      match /ai-images/{fileName} {
+        allow read: if true; // Anyone can read AI-generated images
+        allow write: if isAuthenticated() && isImageType() && isFileSizeValid();
+      }
+    }
+    
+    // Brand assets storage
+    match /brand-assets/{tenantId}/{fileName} {
+      allow read: if isTenantOwner(tenantId) || isAdmin();
+      allow write: if isTenantOwner(tenantId) || isAdmin();
+    }
+    
+    // User uploads
+    match /user-uploads/{userId}/{fileName} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId && isFileSizeValid();
+    }
+    
+    // Public assets (like stock images)
+    match /public/{category}/{fileName} {
+      allow read: if true; // Public assets can be read by anyone
+      allow write: if isAdmin();
+    }
+  }
+}
