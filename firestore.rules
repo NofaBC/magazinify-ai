@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+    
+    function isTenantOwner(tenantId) {
+      return isAuthenticated() && 
+             request.auth.token.tenantId == tenantId;
+    }
+    
+    function isPublishedIssue(tenantId, issueId) {
+      return exists(/databases/$(database)/documents/tenants/$(tenantId)/issues/$(issueId)) &&
+             get(/databases/$(database)/documents/tenants/$(tenantId)/issues/$(issueId)).data.status == 'published';
+    }
+    
+    // Common fields validation
+    function hasRequiredFields(requiredFields) {
+      return request.resource.data.keys().hasAll(requiredFields);
+    }
+    
+    function createdByIsCurrentUser() {
+      return request.resource.data.createdBy == request.auth.uid;
+    }
+    
+    function updatedByIsCurrentUser() {
+      return request.resource.data.updatedBy == request.auth.uid;
+    }
+    
+    // Users collection - only admins can read all users
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == userId &&
+                     hasRequiredFields(['email', 'displayName', 'createdAt']);
+      allow update: if isAuthenticated() && request.auth.uid == userId &&
+                     updatedByIsCurrentUser();
+      allow delete: if isAdmin();
+    }
+    
+    // Tenants collection - tenant-scoped access
+    match /tenants/{tenantId} {
+      // Tenant document
+      allow read: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+      allow create: if isAuthenticated() && hasRequiredFields(['ownerId', 'businessName', 'createdAt']) &&
+                     request.resource.data.ownerId == request.auth.uid;
+      allow update: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin()) &&
+                     updatedByIsCurrentUser();
+      allow delete: if isAdmin();
+      
+      // Issues subcollection
+      match /issues/{issueId} {
+        allow read: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin()) ||
+                     isPublishedIssue(tenantId, issueId); // Published issues can be read by anyone
+        allow write: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+        
+        // Issue components
+        match /articles/{articleId} {
+          allow read: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin()) ||
+                       isPublishedIssue(tenantId, issueId);
+          allow write: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+        }
+        
+        match /images/{imageId} {
+          allow read: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin()) ||
+                       isPublishedIssue(tenantId, issueId);
+          allow write: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+        }
+        
+        match /ads/{adId} {
+          allow read: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin()) ||
+                       isPublishedIssue(tenantId, issueId);
+          allow write: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+        }
+        
+        match /analytics/{analyticsId} {
+          allow read: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+          allow create: if true; // Allow anonymous creation for tracking
+          allow update, delete: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+        }
+      }
+      
+      // Tenant settings and assets
+      match /brandAssets/{assetId} {
+        allow read: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+        allow write: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+      }
+      
+      match /ads/{adId} {
+        allow read: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+        allow write: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+      }
+      
+      match /subscribers/{subscriberId} {
+        allow read: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+        allow create: if true; // Allow anonymous subscription
+        allow update, delete: if isAuthenticated() && (isTenantOwner(tenantId) || isAdmin());
+      }
+    }
+    
+    // Analytics collection for admin dashboard
+    match /analytics/{docId} {
+      allow read: if isAdmin();
+      allow write: if false; // Only written by server
+    }
+    
+    // System settings - admin only
+    match /settings/{settingId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
