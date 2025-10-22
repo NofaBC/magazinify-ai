@@ -1,0 +1,286 @@
+/**
+ * Website Crawler Service
+ * 
+ * This service crawls a website to extract content, images, and branding information
+ * for use in magazine generation.
+ */
+
+const axios = require('axios');
+const cheerio = require('cheerio');
+const url = require('url');
+const { openai } = require('../../config/openai');
+const logger = require('../../utils/logger');
+
+/**
+ * Extract domain name from URL
+ * 
+ * @param {string} websiteUrl - The website URL
+ * @returns {string} - The domain name
+ */
+function extractDomain(websiteUrl) {
+  try {
+    const parsedUrl = new URL(websiteUrl);
+    return parsedUrl.hostname;
+  } catch (error) {
+    // If URL parsing fails, try a simpler approach
+    const match = websiteUrl.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:/\n?]+)/im);
+    return match ? match[1] : websiteUrl;
+  }
+}
+
+/**
+ * Crawl a website to extract content and information
+ * 
+ * @param {string} websiteUrl - The website URL
+ * @returns {Promise<Object>} - The extracted website data
+ */
+async function crawlWebsite(websiteUrl) {
+  try {
+    // Ensure URL has protocol
+    if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
+      websiteUrl = `https://${websiteUrl}`;
+    }
+    
+    // Extract domain
+    const domain = extractDomain(websiteUrl);
+    
+    // Initialize results object
+    const websiteData = {
+      url: websiteUrl,
+      domain,
+      title: '',
+      description: '',
+      businessName: '',
+      pages: [],
+      content: {},
+      images: [],
+      colors: [],
+      social: [],
+      logo: null
+    };
+    
+    // Fetch the homepage
+    logger.info(`Fetching homepage: ${websiteUrl}`);
+    const response = await axios.get(websiteUrl, {
+      headers: {
+        'User-Agent': 'MagazinifyAI/1.0 (https://magazinify.ai; info@magazinify.ai)'
+      },
+      timeout: 10000 // 10 second timeout
+    });
+    
+    const html = response.data;
+    const $ = cheerio.load(html);
+    
+    // Extract basic metadata
+    websiteData.title = $('title').text().trim();
+    websiteData.description = $('meta[name="description"]').attr('content') || '';
+    
+    // Try to extract business name
+    websiteData.businessName = $('.brand, .logo, .site-title, .site-name')
+      .first()
+      .text()
+      .trim() || domain.split('.')[0];
+    
+    // Extract logo
+    const logoSelector = 'header img, .logo img, .brand img, .site-logo img';
+    const logoSrc = $(logoSelector).first().attr('src');
+    
+    if (logoSrc) {
+      websiteData.logo = url.resolve(websiteUrl, logoSrc);
+    }
+    
+    // Extract navigation menu items (potential pages to crawl)
+    const menuItems = [];
+    $('nav a, header a, .menu a, .navigation a').each((i, el) => {
+      const href = $(el).attr('href');
+      const text = $(el).text().trim();
+      
+      if (href && text && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+        const fullUrl = url.resolve(websiteUrl, href);
+        
+        // Only include URLs from the same domain
+        if (extractDomain(fullUrl) === domain) {
+          menuItems.push({
+            url: fullUrl,
+            text
+          });
+        }
+      }
+    });
+    
+    // Extract page content
+    const mainContent = $('main, article, .content, .main, #content, #main').html() || $('body').html();
+    
+    // Clean content
+    let cleanContent = '';
+    if (mainContent) {
+      // Remove script and style tags
+      const tempDiv = cheerio.load(`<div>${mainContent}</div>`)('div');
+      tempDiv.find('script, style, iframe, noscript').remove();
+      
+      // Extract text content
+      cleanContent = tempDiv.text().replace(/\s+/g, ' ').trim();
+    }
+    
+    websiteData.content.home = {
+      title: websiteData.title,
+      text: cleanContent,
+      url: websiteUrl
+    };
+    
+    // Extract all images
+    $('img').each((i, el) => {
+      const src = $(el).attr('src');
+      const alt = $(el).attr('alt') || '';
+      
+      if (src && !src.includes('logo') && !src.includes('icon')) {
+        websiteData.images.push({
+          url: url.resolve(websiteUrl, src),
+          description: alt,
+          source: 'website'
+        });
+      }
+    });
+    
+    // Extract colors (from CSS)
+    const colorRegex = /#([0-9A-F]{3}){1,2}\b|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)/gi;
+    const styleTagContents = $('style').text();
+    const inlineStyles = $('[style]').map((i, el) => $(el).attr('style')).get().join(' ');
+    
+    const allStyles = styleTagContents + ' ' + inlineStyles;
+    const colorMatches = allStyles.match(colorRegex) || [];
+    
+    // Get unique colors
+    websiteData.colors = [...new Set(colorMatches)].slice(0, 5);
+    
+    // Extract social media links
+    $('a[href*="facebook.com"], a[href*="twitter.com"], a[href*="instagram.com"], a[href*="linkedin.com"], a[href*="youtube.com"]').each((i, el) => {
+      const href = $(el).attr('href');
+      
+      if (href) {
+        websiteData.social.push(href);
+      }
+    });
+    
+    // Crawl additional pages (up to 3 more)
+    const pagesToCrawl = menuItems.slice(0, 3); // Limit to 3 additional pages
+    
+    for (const page of pagesToCrawl) {
+      try {
+        logger.info(`Crawling page: ${page.url}`);
+        const pageResponse = await axios.get(page.url, {
+          headers: {
+            'User-Agent': 'MagazinifyAI/1.0 (https://magazinify.ai; info@magazinify.ai)'
+          },
+          timeout: 8000 // 8 second timeout for secondary pages
+        });
+        
+        const pageHtml = pageResponse.data;
+        const page$ = cheerio.load(pageHtml);
+        
+        // Extract page content
+        const pageMainContent = page$('main, article, .content, .main, #content, #main').html() || page$('body').html();
+        
+        // Clean content
+        let pageCleanContent = '';
+        if (pageMainContent) {
+          const pageTempDiv = cheerio.load(`<div>${pageMainContent}</div>`)('div');
+          pageTempDiv.find('script, style, iframe, noscript').remove();
+          pageCleanContent = pageTempDiv.text().replace(/\s+/g, ' ').trim();
+        }
+        
+        const pageKey = page.text.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        
+        websiteData.content[pageKey] = {
+          title: page.text,
+          text: pageCleanContent,
+          url: page.url
+        };
+        
+        websiteData.pages.push({
+          title: page.text,
+          url: page.url
+        });
+        
+        // Extract images from this page too
+        page$('img').each((i, el) => {
+          const src = page$(el).attr('src');
+          const alt = page$(el).attr('alt') || '';
+          
+          if (src && !src.includes('logo') && !src.includes('icon')) {
+            websiteData.images.push({
+              url: url.resolve(page.url, src),
+              description: alt,
+              source: 'website'
+            });
+          }
+        });
+      } catch (pageError) {
+        logger.error(`Error crawling page ${page.url}: ${pageError.message}`);
+        // Continue with other pages
+      }
+    }
+    
+    // Limit images to 20
+    websiteData.images = websiteData.images.slice(0, 20);
+    
+    // Use OpenAI to analyze the website content and extract key business information
+    try {
+      logger.info(`Analyzing website content with AI for ${websiteUrl}`);
+      
+      const allContent = Object.values(websiteData.content)
+        .map(page => `${page.title}\n${page.text}`)
+        .join('\n\n')
+        .substring(0, 10000); // Limit to 10k characters
+      
+      const aiResponse = await openai.chat.completions.create({
+        model: process.env.OPENAI_MODEL || "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a business analyst who extracts key business information from website content. 
+                     Provide a JSON response with the following fields:
+                     - businessName: The name of the business
+                     - businessType: The type/category of business
+                     - mainProducts: Array of main products or services offered
+                     - targetAudience: Who the business targets as customers
+                     - uniqueSellingPoints: Array of what makes this business special
+                     - tone: The tone of the website (formal, friendly, technical, etc.)
+                     - contactInfo: Any contact information found
+                     `
+          },
+          {
+            role: "user",
+            content: `Analyze this website content:\nURL: ${websiteUrl}\nTitle: ${websiteData.title}\n\nContent:\n${allContent}`
+          }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 500
+      });
+      
+      const aiAnalysis = JSON.parse(aiResponse.choices[0].message.content);
+      
+      // Merge AI analysis with website data
+      websiteData.businessName = aiAnalysis.businessName || websiteData.businessName;
+      websiteData.businessType = aiAnalysis.businessType;
+      websiteData.mainProducts = aiAnalysis.mainProducts;
+      websiteData.targetAudience = aiAnalysis.targetAudience;
+      websiteData.uniqueSellingPoints = aiAnalysis.uniqueSellingPoints;
+      websiteData.tone = aiAnalysis.tone;
+      websiteData.contactInfo = aiAnalysis.contactInfo;
+    } catch (aiError) {
+      logger.error(`Error analyzing website with AI: ${aiError.message}`);
+      // Continue without AI analysis
+    }
+    
+    return websiteData;
+  } catch (error) {
+    logger.error(`Error crawling website ${websiteUrl}: ${error.message}`);
+    throw new Error(`Failed to crawl website: ${error.message}`);
+  }
+}
+
+module.exports = {
+  crawlWebsite,
+  extractDomain
+};
