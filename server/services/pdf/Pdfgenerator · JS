@@ -1,0 +1,435 @@
+/**
+ * PDF Generator Service
+ * 
+ * This service generates PDF magazines using Puppeteer to render HTML templates.
+ */
+
+const puppeteer = require('puppeteer');
+const handlebars = require('handlebars');
+const fs = require('fs');
+const path = require('path');
+const markdownit = require('markdown-it')();
+const logger = require('../../utils/logger');
+
+// Register Handlebars helpers
+handlebars.registerHelper('markdown', function(text) {
+  return new handlebars.SafeString(markdownit.render(text || ''));
+});
+
+handlebars.registerHelper('truncate', function(text, length) {
+  if (text && text.length > length) {
+    return text.substring(0, length) + '...';
+  }
+  return text;
+});
+
+handlebars.registerHelper('formatDate', function(date) {
+  return new Date(date).toLocaleDateString('en-US', { 
+    month: 'long', 
+    year: 'numeric' 
+  });
+});
+
+handlebars.registerHelper('eq', function(a, b) {
+  return a === b;
+});
+
+handlebars.registerHelper('not', function(a) {
+  return !a;
+});
+
+handlebars.registerHelper('or', function(a, b) {
+  return a || b;
+});
+
+handlebars.registerHelper('and', function(a, b) {
+  return a && b;
+});
+
+// Load templates
+const templatesDir = path.join(__dirname, '../', 'templates');
+
+// Create templates directory if it doesn't exist (for development)
+if (!fs.existsSync(templatesDir)) {
+  fs.mkdirSync(templatesDir, { recursive: true });
+  
+  // Create basic template files
+  const basicTemplate = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>{{issue.title}}</title>
+      <style>
+        body {
+          font-family: 'Arial', sans-serif;
+          margin: 0;
+          padding: 0;
+        }
+        .page {
+          width: 8.5in;
+          height: 11in;
+          position: relative;
+          page-break-after: always;
+        }
+        .header {
+          padding: 20px;
+          text-align: center;
+        }
+        .logo {
+          max-height: 80px;
+          max-width: 200px;
+        }
+        .content {
+          padding: 20px;
+        }
+        img {
+          max-width: 100%;
+        }
+      </style>
+    </head>
+    <body>
+      {{#each pages}}
+        <div class="page">
+          {{{this}}}
+        </div>
+      {{/each}}
+    </body>
+    </html>
+  `;
+  
+  fs.writeFileSync(path.join(templatesDir, 'basic.hbs'), basicTemplate);
+  
+  // Create template for cover page
+  const coverTemplate = `
+    <div class="cover">
+      <div class="header">
+        {{#if tenant.logo}}
+          <img class="logo" src="{{tenant.logo}}" alt="{{tenant.name}} Logo">
+        {{else}}
+          <h1>{{tenant.name}}</h1>
+        {{/if}}
+      </div>
+      <div class="title">
+        <h1>{{issue.title}}</h1>
+        <h2>{{formatDate issue.date}}</h2>
+      </div>
+      {{#if coverImage}}
+        <img class="cover-image" src="{{coverImage.url}}" alt="{{coverImage.description}}">
+      {{/if}}
+    </div>
+  `;
+  
+  fs.writeFileSync(path.join(templatesDir, 'cover.hbs'), coverTemplate);
+  
+  // Create template for article pages
+  const articleTemplate = `
+    <div class="article-page">
+      <div class="article-header">
+        <h2>{{article.title}}</h2>
+      </div>
+      <div class="article-content">
+        {{{markdown article.content}}}
+      </div>
+      {{#if image}}
+        <div class="article-image">
+          <img src="{{image.url}}" alt="{{image.description}}">
+          <p class="caption">{{image.description}}</p>
+        </div>
+      {{/if}}
+    </div>
+  `;
+  
+  fs.writeFileSync(path.join(templatesDir, 'article.hbs'), articleTemplate);
+}
+
+/**
+ * Preprocess magazine data to prepare for PDF generation
+ * 
+ * @param {Object} magazineData - Raw magazine data
+ * @returns {Object} - Preprocessed magazine data
+ */
+function preprocessData(magazineData) {
+  try {
+    const processed = { ...magazineData };
+    
+    // Extract titles from articles (they're embedded in the content)
+    processed.articles = processed.articles.map(article => {
+      // Extract title from content (usually the first line with # or ## markdown)
+      const titleMatch = article.content.match(/^#+ (.+)$/m);
+      let title = titleMatch ? titleMatch[1] : 'Untitled Article';
+      
+      // Remove the title from the content if found
+      let content = article.content;
+      if (titleMatch) {
+        content = content.replace(titleMatch[0], '').trim();
+      }
+      
+      return {
+        ...article,
+        title,
+        content
+      };
+    });
+    
+    // Sort articles by type (flagship first, then supporting)
+    processed.articles.sort((a, b) => {
+      if (a.type === 'flagship' && b.type !== 'flagship') return -1;
+      if (a.type !== 'flagship' && b.type === 'flagship') return 1;
+      return 0;
+    });
+    
+    // Select cover image (prefer first image from flagship article)
+    if (processed.images.length > 0) {
+      // Find image referenced in flagship article's first [IMAGE: description] tag
+      const flagshipArticle = processed.articles.find(a => a.type === 'flagship');
+      
+      if (flagshipArticle) {
+        const imageRegex = /\[IMAGE: (.*?)\]/;
+        const match = flagshipArticle.content.match(imageRegex);
+        
+        if (match) {
+          const description = match[1];
+          const coverImage = processed.images.find(img => 
+            img.description.toLowerCase().includes(description.toLowerCase())
+          );
+          
+          if (coverImage) {
+            processed.coverImage = coverImage;
+          } else {
+            // Use the first image as cover
+            processed.coverImage = processed.images[0];
+          }
+        } else {
+          // Use the first image as cover
+          processed.coverImage = processed.images[0];
+        }
+      } else {
+        // Use the first image as cover
+        processed.coverImage = processed.images[0];
+      }
+    }
+    
+    return processed;
+  } catch (error) {
+    logger.error(`Error preprocessing magazine data: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Generate a PDF magazine
+ * 
+ * @param {Object} magazineData - The magazine data
+ * @returns {Promise<Object>} - The generated PDF buffer and metadata
+ */
+async function generatePDF(magazineData) {
+  try {
+    // Preprocess data
+    const data = preprocessData(magazineData);
+    
+    // Determine which template to use based on plan type
+    const templateName = data.options.pageCount === 12 ? 'basic' : 'pro';
+    
+    // Generate HTML content for each page
+    const pages = [];
+    
+    // Cover page
+    const coverTemplate = fs.existsSync(path.join(templatesDir, 'cover.hbs')) ?
+      handlebars.compile(fs.readFileSync(path.join(templatesDir, 'cover.hbs'), 'utf8')) :
+      handlebars.compile('<h1>{{issue.title}}</h1>');
+    
+    pages.push(coverTemplate({
+      tenant: data.tenant,
+      issue: data.issue,
+      coverImage: data.coverImage
+    }));
+    
+    // Table of contents
+    const tocTemplate = fs.existsSync(path.join(templatesDir, 'toc.hbs')) ?
+      handlebars.compile(fs.readFileSync(path.join(templatesDir, 'toc.hbs'), 'utf8')) :
+      handlebars.compile('<h2>Contents</h2><ul>{{#each articles}}<li>{{this.title}}</li>{{/each}}</ul>');
+    
+    pages.push(tocTemplate({
+      tenant: data.tenant,
+      issue: data.issue,
+      articles: data.articles
+    }));
+    
+    // Article pages
+    const articleTemplate = fs.existsSync(path.join(templatesDir, 'article.hbs')) ?
+      handlebars.compile(fs.readFileSync(path.join(templatesDir, 'article.hbs'), 'utf8')) :
+      handlebars.compile('<h2>{{article.title}}</h2>{{{markdown article.content}}}');
+    
+    let imageIndex = data.coverImage ? 1 : 0; // Skip cover image
+    
+    for (const article of data.articles) {
+      // Extract image placeholders from content
+      const imageRegex = /\[IMAGE: (.*?)\]/g;
+      let match;
+      let content = article.content;
+      const usedImages = [];
+      
+      // Replace image placeholders with actual images
+      while ((match = imageRegex.exec(article.content)) !== null) {
+        const description = match[1];
+        
+        // Find matching image
+        const image = data.images.find((img, idx) => 
+          idx >= imageIndex && 
+          img.description.toLowerCase().includes(description.toLowerCase())
+        );
+        
+        if (image) {
+          // Replace placeholder with image HTML
+          content = content.replace(
+            match[0],
+            `<div class="article-image">
+              <img src="${image.url}" alt="${image.description}">
+              <p class="caption">${image.description}</p>
+            </div>`
+          );
+          
+          usedImages.push(image);
+          imageIndex = data.images.indexOf(image) + 1;
+        } else {
+          // Remove placeholder if no image found
+          content = content.replace(match[0], '');
+        }
+      }
+      
+      // Update article content
+      article.content = content;
+      
+      // Create article pages
+      const articlePages = Math.ceil(article.wordCount / 500); // Roughly 500 words per page
+      
+      for (let i = 0; i < articlePages; i++) {
+        const isFirstPage = i === 0;
+        
+        // Get the portion of the article for this page
+        let pageContent = content;
+        
+        if (articlePages > 1) {
+          const words = content.split(' ');
+          const wordsPerPage = Math.ceil(words.length / articlePages);
+          const startIndex = i * wordsPerPage;
+          const endIndex = Math.min(startIndex + wordsPerPage, words.length);
+          
+          pageContent = words.slice(startIndex, endIndex).join(' ');
+        }
+        
+        // Add article page
+        pages.push(articleTemplate({
+          tenant: data.tenant,
+          issue: data.issue,
+          article: {
+            ...article,
+            content: pageContent,
+            isFirstPage,
+          },
+          image: isFirstPage && usedImages.length > 0 ? usedImages[0] : null
+        }));
+      }
+    }
+    
+    // Ad pages
+    const adTemplate = fs.existsSync(path.join(templatesDir, 'ad.hbs')) ?
+      handlebars.compile(fs.readFileSync(path.join(templatesDir, 'ad.hbs'), 'utf8')) :
+      handlebars.compile('<div class="ad"><h3>{{ad.title}}</h3><p>{{ad.description}}</p></div>');
+    
+    for (const ad of data.ads) {
+      pages.push(adTemplate({
+        tenant: data.tenant,
+        issue: data.issue,
+        ad
+      }));
+    }
+    
+    // Back cover
+    const backCoverTemplate = fs.existsSync(path.join(templatesDir, 'back-cover.hbs')) ?
+      handlebars.compile(fs.readFileSync(path.join(templatesDir, 'back-cover.hbs'), 'utf8')) :
+      handlebars.compile('<h2>{{tenant.name}}</h2><p>{{tenant.website}}</p>');
+    
+    pages.push(backCoverTemplate({
+      tenant: data.tenant,
+      issue: data.issue
+    }));
+    
+    // If we need more pages to reach the required page count, add blank pages
+    while (pages.length < data.options.pageCount) {
+      pages.push('<div class="blank-page"></div>');
+    }
+    
+    // If we have too many pages, trim to fit
+    if (pages.length > data.options.pageCount) {
+      pages.length = data.options.pageCount;
+    }
+    
+    // Combine pages into full magazine template
+    const magazineTemplate = fs.existsSync(path.join(templatesDir, `${templateName}.hbs`)) ?
+      handlebars.compile(fs.readFileSync(path.join(templatesDir, `${templateName}.hbs`), 'utf8')) :
+      handlebars.compile(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>{{issue.title}}</title>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+            .page { width: 8.5in; height: 11in; page-break-after: always; padding: 0.5in; }
+          </style>
+        </head>
+        <body>
+          {{#each pages}}
+            <div class="page">{{{this}}}</div>
+          {{/each}}
+        </body>
+        </html>
+      `);
+    
+    const html = magazineTemplate({
+      tenant: data.tenant,
+      issue: data.issue,
+      pages
+    });
+    
+    // Generate PDF using Puppeteer
+    logger.info('Launching Puppeteer to generate PDF');
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      headless: 'new'
+    });
+    
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    // Set PDF options for a magazine (US Letter size)
+    const pdfBuffer = await page.pdf({
+      format: 'Letter',
+      printBackground: true,
+      margin: {
+        top: '0.4in',
+        right: '0.4in',
+        bottom: '0.4in',
+        left: '0.4in'
+      }
+    });
+    
+    await browser.close();
+    
+    return {
+      buffer: pdfBuffer,
+      pageCount: pages.length,
+      html
+    };
+  } catch (error) {
+    logger.error(`Error generating PDF: ${error.message}`);
+    throw error;
+  }
+}
+
+module.exports = {
+  generatePDF
+};
