@@ -1,0 +1,460 @@
+/**
+ * Magazine Generation Service
+ * 
+ * This service coordinates the generation of magazines by orchestrating content generation,
+ * image processing, and PDF creation.
+ */
+
+const { firestore, storage, Timestamp } = require('../config/firebase');
+const { generateMagazineContent, generateImagePrompts } = require('../config/openai');
+const websiteCrawler = require('./ai/websiteCrawler');
+const imageProcessor = require('./image/imageProcessor');
+const aiImageGenerator = require('./image/aiImageGenerator');
+const pdfGenerator = require('./pdf/pdfGenerator');
+const flipbookGenerator = require('./pdf/flipbookGenerator');
+const stockImageFinder = require('./image/stockImageFinder');
+const logger = require('../utils/logger');
+
+/**
+ * Generate a magazine for a tenant
+ * 
+ * @param {string} tenantId - The tenant ID
+ * @param {string} websiteUrl - The website URL
+ * @param {Object} options - Additional options
+ * @returns {Promise<Object>} - The generated magazine data
+ */
+async function generateMagazine(tenantId, websiteUrl, options = {}) {
+  try {
+    // Set the issue ID based on year-month
+    const now = new Date();
+    const issueId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Check if this tenant already has a magazine for this month
+    const existingIssue = await firestore
+      .collection(`tenants/${tenantId}/issues`)
+      .doc(issueId)
+      .get();
+      
+    if (existingIssue.exists) {
+      throw new Error('Magazine already generated for this month');
+    }
+    
+    // Create issue document with initial state
+    await firestore
+      .collection(`tenants/${tenantId}/issues`)
+      .doc(issueId)
+      .set({
+        id: issueId,
+        status: 'generating',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        websiteUrl,
+        options
+      });
+    
+    // Get tenant data
+    const tenantDoc = await firestore.collection('tenants').doc(tenantId).get();
+    const tenant = tenantDoc.data();
+    
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+    
+    // Determine plan type and page count
+    const planType = tenant.subscription?.planType || 'basic';
+    const pageCount = planType === 'basic' ? 12 : 24;
+    const articleCount = planType === 'basic' ? 5 : 6;
+    
+    // Step 1: Crawl the website to gather content
+    logger.info(`Crawling website ${websiteUrl} for tenant ${tenantId}`);
+    const websiteData = await websiteCrawler.crawlWebsite(websiteUrl);
+    
+    // Extract brand information
+    const brandInfo = {
+      businessName: tenant.businessName || websiteData.businessName,
+      logo: tenant.brandAssets?.logo || websiteData.logo,
+      colors: tenant.brandAssets?.colors || websiteData.colors,
+      tone: tenant.brandAssets?.tone || websiteData.tone,
+      imageStyle: tenant.brandAssets?.imageStyle || 'professional'
+    };
+    
+    // Step 2: Generate content
+    logger.info(`Generating content for tenant ${tenantId}`);
+    const articles = await generateMagazineContent(
+      websiteData, 
+      brandInfo, 
+      { articleCount, maxTokens: planType === 'basic' ? 1200 : 1500 }
+    );
+    
+    // Save articles to Firestore
+    const articlesRef = firestore.collection(`tenants/${tenantId}/issues/${issueId}/articles`);
+    const articlePromises = articles.map((article, index) => {
+      return articlesRef.add({
+        ...article,
+        index,
+        createdAt: Timestamp.now()
+      });
+    });
+    
+    await Promise.all(articlePromises);
+    
+    // Step 3: Generate image prompts
+    logger.info(`Generating image prompts for tenant ${tenantId}`);
+    const imagePrompts = await generateImagePrompts(articles, brandInfo);
+    
+    // Step 4: Process images from different sources
+    logger.info(`Processing images for tenant ${tenantId}`);
+    const images = [];
+    
+    // A. Process uploaded images first
+    if (tenant.uploadedImages && tenant.uploadedImages.length > 0) {
+      for (const image of tenant.uploadedImages) {
+        images.push({
+          url: image.url,
+          source: 'uploaded',
+          description: image.description || 'Uploaded image',
+          metadata: {
+            uploadedBy: tenantId,
+            timestamp: Timestamp.now()
+          }
+        });
+        
+        if (images.length >= (planType === 'basic' ? 8 : 15)) {
+          break; // Limit the number of images based on plan
+        }
+      }
+    }
+    
+    // B. Crawl website/social for images
+    if (images.length < (planType === 'basic' ? 8 : 15) && websiteData.images) {
+      for (const image of websiteData.images) {
+        images.push({
+          url: image.url,
+          source: 'website',
+          description: image.description || 'Website image',
+          metadata: {
+            source: 'website',
+            originalUrl: image.url,
+            timestamp: Timestamp.now()
+          }
+        });
+        
+        if (images.length >= (planType === 'basic' ? 8 : 15)) {
+          break;
+        }
+      }
+    }
+    
+    // C. Generate AI images based on prompts
+    if (images.length < (planType === 'basic' ? 8 : 15) && imagePrompts.length > 0) {
+      for (const prompt of imagePrompts) {
+        try {
+          const aiImage = await aiImageGenerator.generateImage(prompt.prompt);
+          
+          images.push({
+            url: aiImage.url,
+            source: 'ai',
+            description: prompt.description,
+            prompt: prompt.prompt,
+            metadata: {
+              source: 'ai',
+              timestamp: Timestamp.now()
+            }
+          });
+          
+          if (images.length >= (planType === 'basic' ? 8 : 15)) {
+            break;
+          }
+        } catch (error) {
+          logger.error(`Error generating AI image: ${error.message}`);
+          continue;
+        }
+      }
+    }
+    
+    // D. Use stock images if needed
+    if (images.length < (planType === 'basic' ? 8 : 15)) {
+      const neededImages = (planType === 'basic' ? 8 : 15) - images.length;
+      
+      try {
+        const stockImages = await stockImageFinder.findStockImages(
+          brandInfo.businessName, 
+          neededImages
+        );
+        
+        for (const image of stockImages) {
+          images.push({
+            url: image.url,
+            source: 'stock',
+            description: image.description || 'Stock image',
+            metadata: {
+              source: 'stock',
+              provider: image.provider,
+              license: image.license,
+              timestamp: Timestamp.now()
+            }
+          });
+        }
+      } catch (error) {
+        logger.error(`Error finding stock images: ${error.message}`);
+      }
+    }
+    
+    // Save images to Firestore
+    const imagesRef = firestore.collection(`tenants/${tenantId}/issues/${issueId}/images`);
+    const imagePromises = images.map((image, index) => {
+      return imagesRef.add({
+        ...image,
+        index,
+        createdAt: Timestamp.now()
+      });
+    });
+    
+    await Promise.all(imagePromises);
+    
+    // Step 5: Get ad slots
+    const ads = [];
+    
+    // Get tenant's ad slots if any
+    const adsSnapshot = await firestore
+      .collection(`tenants/${tenantId}/ads`)
+      .where('active', '==', true)
+      .limit(planType === 'basic' ? 2 : 4)
+      .get();
+    
+    adsSnapshot.forEach(doc => {
+      const ad = doc.data();
+      ads.push({
+        ...ad,
+        id: doc.id,
+        source: 'tenant'
+      });
+    });
+    
+    // If not enough ads, add NOFA Business Consulting ad
+    if (ads.length < (planType === 'basic' ? 1 : 2) && options.includeNofaAd !== false) {
+      ads.push({
+        title: 'Powered by NOFA Business Consulting',
+        description: 'This magazine was generated using Magazinify AI™, a product of NOFA Business Consulting.',
+        url: 'https://nofa.com',
+        imageUrl: 'https://magazinify.ai/assets/nofa-ad.jpg',
+        source: 'nofa'
+      });
+    }
+    
+    // Save ads to Firestore
+    const adsRef = firestore.collection(`tenants/${tenantId}/issues/${issueId}/ads`);
+    const adPromises = ads.map((ad, index) => {
+      return adsRef.add({
+        ...ad,
+        index,
+        createdAt: Timestamp.now()
+      });
+    });
+    
+    await Promise.all(adPromises);
+    
+    // Step 6: Generate PDF
+    logger.info(`Generating PDF for tenant ${tenantId}`);
+    
+    // Format data for PDF generator
+    const magazineData = {
+      tenant: {
+        id: tenantId,
+        name: tenant.businessName,
+        logo: brandInfo.logo,
+        colors: brandInfo.colors,
+        website: websiteUrl,
+        contact: tenant.contactInfo
+      },
+      issue: {
+        id: issueId,
+        title: `${tenant.businessName} - ${now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+        date: now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      },
+      articles,
+      images,
+      ads,
+      options: {
+        pageCount,
+        includeNofaAd: options.includeNofaAd !== false,
+        whiteLabel: planType === 'basic' ? false : tenant.brandAssets?.whiteLabel || false
+      }
+    };
+    
+    // Generate the PDF
+    const pdfResult = await pdfGenerator.generatePDF(magazineData);
+    
+    // Upload PDF to Cloud Storage
+    const pdfFileName = `${tenantId}/${issueId}/magazine.pdf`;
+    const pdfFileRef = storage.bucket().file(pdfFileName);
+    
+    await pdfFileRef.save(pdfResult.buffer, {
+      metadata: {
+        contentType: 'application/pdf',
+        metadata: {
+          tenantId,
+          issueId,
+          pageCount
+        }
+      }
+    });
+    
+    // Make the file publicly accessible
+    await pdfFileRef.makePublic();
+    
+    // Get the public URL
+    const pdfUrl = `https://storage.googleapis.com/${storage.bucket().name}/${pdfFileName}`;
+    
+    // Step 7: Generate flipbook
+    logger.info(`Generating flipbook for tenant ${tenantId}`);
+    const flipbookResult = await flipbookGenerator.generateFlipbook(pdfResult.buffer, pageCount);
+    
+    // Upload flipbook files to Cloud Storage
+    const flipbookFolderName = `${tenantId}/${issueId}/flipbook`;
+    const flipbookUrls = [];
+    
+    for (let i = 0; i < flipbookResult.pages.length; i++) {
+      const page = flipbookResult.pages[i];
+      const pageFileName = `${flipbookFolderName}/page-${i + 1}.jpg`;
+      const pageFileRef = storage.bucket().file(pageFileName);
+      
+      await pageFileRef.save(page.buffer, {
+        metadata: {
+          contentType: 'image/jpeg',
+          metadata: {
+            tenantId,
+            issueId,
+            pageNumber: i + 1
+          }
+        }
+      });
+      
+      await pageFileRef.makePublic();
+      
+      const pageUrl = `https://storage.googleapis.com/${storage.bucket().name}/${pageFileName}`;
+      flipbookUrls.push(pageUrl);
+    }
+    
+    // Upload flipbook HTML
+    const flipbookHtmlFileName = `${tenantId}/${issueId}/flipbook/index.html`;
+    const flipbookHtmlRef = storage.bucket().file(flipbookHtmlFileName);
+    
+    await flipbookHtmlRef.save(flipbookResult.html, {
+      metadata: {
+        contentType: 'text/html',
+        metadata: {
+          tenantId,
+          issueId
+        }
+      }
+    });
+    
+    await flipbookHtmlRef.makePublic();
+    
+    const flipbookUrl = `https://storage.googleapis.com/${storage.bucket().name}/${flipbookHtmlFileName}`;
+    
+    // Step 8: Update issue document with status and URLs
+    await firestore
+      .collection(`tenants/${tenantId}/issues`)
+      .doc(issueId)
+      .update({
+        status: 'published',
+        pdfUrl,
+        flipbookUrl,
+        pageUrls: flipbookUrls,
+        pageCount,
+        articleCount: articles.length,
+        imageCount: images.length,
+        adCount: ads.length,
+        updatedAt: Timestamp.now(),
+        publishedAt: Timestamp.now()
+      });
+    
+    // Return the completed magazine data
+    return {
+      issueId,
+      pdfUrl,
+      flipbookUrl,
+      pageCount,
+      articleCount: articles.length,
+      imageCount: images.length,
+      adCount: ads.length
+    };
+  } catch (error) {
+    logger.error(`Error generating magazine: ${error.message}`, { tenantId, error });
+    
+    // Update issue document with error status
+    if (tenantId) {
+      const now = new Date();
+      const issueId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      try {
+        await firestore
+          .collection(`tenants/${tenantId}/issues`)
+          .doc(issueId)
+          .update({
+            status: 'error',
+            error: error.message,
+            updatedAt: Timestamp.now()
+          });
+      } catch (updateError) {
+        logger.error(`Error updating issue status: ${updateError.message}`);
+      }
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Check if a tenant is eligible for magazine generation this month
+ * 
+ * @param {string} tenantId - The tenant ID
+ * @returns {Promise<boolean>} - Whether the tenant is eligible
+ */
+async function checkActivationEligibility(tenantId) {
+  try {
+    // Get tenant data
+    const tenantDoc = await firestore.collection('tenants').doc(tenantId).get();
+    const tenant = tenantDoc.data();
+    
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+    
+    // Check subscription status
+    if (!tenant.subscription || tenant.subscription.status !== 'active') {
+      return false;
+    }
+    
+    // Check if subscription has expired
+    const currentPeriodEnd = tenant.subscription.currentPeriodEnd.toDate();
+    if (currentPeriodEnd < new Date()) {
+      return false;
+    }
+    
+    // Check if already generated this month
+    const now = new Date();
+    const issueId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    const existingIssue = await firestore
+      .collection(`tenants/${tenantId}/issues`)
+      .doc(issueId)
+      .get();
+      
+    if (existingIssue.exists) {
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    logger.error(`Error checking activation eligibility: ${error.message}`, { tenantId });
+    throw error;
+  }
+}
+
+module.exports = {
+  generateMagazine,
+  checkActivationEligibility
+};
