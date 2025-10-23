@@ -1,0 +1,127 @@
+/* Loader Component Styles */
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+}
+
+/* Loader Sizes */
+.loader-small .loader-spinner {
+  width: 20px;
+  height: 20px;
+}
+
+.loader-medium .loader-spinner {
+  width: 32px;
+  height: 32px;
+}
+
+.loader-large .loader-spinner {
+  width: 48px;
+  height: 48px;
+}
+
+/* Loader Spinner */
+.loader-spinner {
+  border: 3px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Loader Colors */
+.loader-primary .loader-spinner {
+  border-top-color: var(--primary-color);
+}
+
+.loader-secondary .loader-spinner {
+  border-top-color: var(--secondary-color);
+}
+
+.loader-white .loader-spinner {
+  border-top-color: white;
+}
+
+.loader-gray .loader-spinner {
+  border-top-color: var(--gray-400);
+}
+
+/* Loader Text */
+.loader-text {
+  font-size: var(--font-size-sm);
+  color: var(--gray-600);
+  text-align: center;
+}
+
+/* Overlay Loader */
+.loader-overlay-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-index-modal-backdrop);
+}
+
+.loader-overlay {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: var(--spacing-8);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Inline Loader */
+.loader-inline {
+  display: inline-flex;
+  flex-direction: row;
+  gap: var(--spacing-2);
+}
+
+.loader-inline .loader-text {
+  margin: 0;
+}
+
+/* Animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Page Loader */
+.page-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-index-modal);
+}
+
+/* Skeleton Loader */
+.skeleton-loader {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: var(--border-radius);
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
