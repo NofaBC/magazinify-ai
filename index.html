@@ -10,34 +10,115 @@
         .gradient-bg {
             background: linear-gradient(90deg, #0ea5e9, #2563eb);
         }
+        
+        /* Complete redesign of the flip book to ensure top-to-bottom animation */
         .flip-book {
             perspective: 1000px;
-        }
-        .page {
             width: 200px;
             height: 280px;
-            position: absolute;
-            top: 0;
-            right: 0;
-            transform-origin: left;
-            transform-style: preserve-3d;
-            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+            position: relative;
+            margin: 0 auto;
         }
+        
+        .magazine-cover {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            z-index: 10;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .cover-header {
+            height: 33%;
+            background-color: #2563eb;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+        }
+        
+        .cover-content {
+            flex: 1;
+            background-color: #f3f4f6;
+            border-radius: 4px;
+        }
+        
+        .flipping-page {
+            position: absolute;
+            width: 100%;
+            height: 40%;
+            top: 0;
+            transform-origin: bottom;
+            transform-style: preserve-3d;
+            z-index: 20;
+        }
+        
+        .animate-flip {
+            animation: flip-top-to-bottom 2s infinite alternate ease-in-out;
+        }
+        
+        @keyframes flip-top-to-bottom {
+            0% { transform: rotateX(0deg); }
+            100% { transform: rotateX(180deg); }
+        }
+        
         .page-front, .page-back {
             position: absolute;
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
+            border-radius: 4px 4px 0 0;
         }
+        
+        .page-front {
+            background-color: white;
+            z-index: 30;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2563eb;
+            font-weight: bold;
+        }
+        
         .page-back {
-            transform: rotateY(180deg);
+            background-color: #f9fafb;
+            transform: rotateX(180deg);
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+            padding: 12px;
         }
-        .animate-page {
-            animation: flip-page 2s infinite alternate;
+        
+        .page-line {
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            margin-bottom: 8px;
         }
-        @keyframes flip-page {
-            from { transform: rotateY(0deg); }
-            to { transform: rotateY(-180deg); }
+        
+        /* Logo styling */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-img {
+            width: 36px;
+            height: 36px;
+            display: block;
+        }
+        
+        .dark-bg {
+            background-color: #0f172a;
         }
     </style>
 </head>
@@ -46,7 +127,10 @@
     <header class="gradient-bg text-white">
         <div class="container mx-auto px-6 py-16">
             <nav class="flex justify-between items-center mb-16">
-                <div class="text-2xl font-bold">Magazinify AI<span class="text-sm align-top">™</span></div>
+                <div class="logo">
+                    <img src="logo192.png" alt="Magazinify AI Logo" class="logo-img">
+                    <div class="text-2xl font-bold">Magazinify AI<span class="text-sm align-top">™</span></div>
+                </div>
                 <div class="hidden md:flex space-x-8">
                     <a href="#features" class="hover:text-blue-200 transition">Features</a>
                     <a href="#how-it-works" class="hover:text-blue-200 transition">How It Works</a>
@@ -62,32 +146,33 @@
             <div class="flex flex-col md:flex-row items-center">
                 <div class="md:w-1/2 mb-10 md:mb-0">
                     <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-6">Turn Your Website Into An Engaging Magazine</h1>
-                    <p class="text-xl mb-8">Magazinify AI™ automatically generates custom, professional digital magazines from your business website. Build authority, engage clients, and drive traffic.</p>
-                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                        <a href="#demo" class="px-8 py-3 rounded-lg bg-white text-blue-600 font-bold text-center hover:bg-blue-100 transition">See Demo</a>
-                        <a href="#get-started" class="px-8 py-3 rounded-lg border border-white text-white font-bold text-center hover:bg-white hover:text-blue-600 transition">Get Started</a>
+                    <p class="text-xl mb-8">Magazinify AI™ automatically generates custom, professional digital magazines from your business website.</p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="#signup" class="bg-white text-blue-600 hover:bg-blue-100 px-6 py-3 rounded-lg font-semibold text-center transition">Get Started</a>
+                        <a href="#demo" class="border border-white hover:bg-white/10 px-6 py-3 rounded-lg font-semibold text-center transition">See Demo</a>
                     </div>
                 </div>
                 <div class="md:w-1/2 flex justify-center">
-                    <div class="flip-book relative w-64 h-80">
-                        <div class="absolute top-0 left-0 w-full h-full bg-blue-800 rounded-lg shadow-xl"></div>
-                        <div class="page animate-page">
-                            <div class="page-front bg-white rounded-r-lg shadow-md p-4">
-                                <div class="h-28 bg-gray-200 rounded mb-4"></div>
-                                <div class="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                                <div class="h-4 bg-gray-300 rounded w-1/2 mb-6"></div>
-                                <div class="h-3 bg-gray-200 rounded mb-2"></div>
-                                <div class="h-3 bg-gray-200 rounded mb-2"></div>
-                                <div class="h-3 bg-gray-200 rounded mb-2"></div>
-                                <div class="h-3 bg-gray-200 rounded"></div>
-                            </div>
-                            <div class="page-back bg-white rounded-l-lg shadow-md p-4">
-                                <div class="h-4 bg-gray-300 rounded w-1/2 mb-4"></div>
-                                <div class="h-28 bg-gray-200 rounded mb-4"></div>
-                                <div class="h-3 bg-gray-200 rounded mb-2"></div>
-                                <div class="h-3 bg-gray-200 rounded mb-2"></div>
-                                <div class="h-3 bg-gray-200 rounded mb-2"></div>
-                                <div class="h-3 bg-gray-200 rounded"></div>
+                    <!-- Completely redesigned flip book animation -->
+                    <div class="flip-book">
+                        <!-- Magazine cover (static) -->
+                        <div class="magazine-cover">
+                            <div class="cover-header">YOUR MAGAZINE</div>
+                            <div class="page-line w-full"></div>
+                            <div class="page-line w-2/3"></div>
+                            <div class="cover-content"></div>
+                        </div>
+                        
+                        <!-- Top flipping page -->
+                        <div class="flipping-page animate-flip">
+                            <div class="page-front">YOUR BUSINESS</div>
+                            <div class="page-back">
+                                <div class="page-line w-full"></div>
+                                <div class="page-line w-3/4"></div>
+                                <div class="page-line w-full h-16 mb-4"></div>
+                                <div class="page-line w-full"></div>
+                                <div class="page-line w-full"></div>
+                                <div class="page-line w-2/3"></div>
                             </div>
                         </div>
                     </div>
@@ -97,66 +182,66 @@
     </header>
 
     <!-- Features Section -->
-    <section id="features" class="py-20 bg-gray-50">
+    <section id="features" class="py-20">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center mb-16">What Magazinify AI™ Does For You</h2>
+            <h2 class="text-3xl font-bold text-center mb-16">Why Magazinify AI™?</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-                <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-blue-600 text-4xl mb-4">
-                        <i class="fas fa-magic"></i>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                <div class="p-6 bg-blue-50 rounded-xl">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-6">
+                        <i class="fas fa-magic text-xl"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-4">Automated Content Creation</h3>
-                    <p>Our AI analyzes your website, creates one flagship article and 4-5 supporting blog-style pieces tailored to your business.</p>
+                    <h3 class="text-xl font-bold mb-4">AI-Generated Content</h3>
+                    <p class="text-gray-600">Our AI extracts content from your website and transforms it into magazine-style articles with stunning visuals.</p>
                 </div>
                 
-                <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-blue-600 text-4xl mb-4">
-                        <i class="fas fa-image"></i>
+                <div class="p-6 bg-blue-50 rounded-xl">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-6">
+                        <i class="fas fa-paint-brush text-xl"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-4">Smart Image Sourcing</h3>
-                    <p>Uses your uploaded images, website content, AI-generated visuals, or licensed stock photos to create a visually appealing magazine.</p>
+                    <h3 class="text-xl font-bold mb-4">Professional Design</h3>
+                    <p class="text-gray-600">Beautiful templates and layouts that make your content shine. Fully branded with your colors and logo.</p>
                 </div>
                 
-                <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-blue-600 text-4xl mb-4">
-                        <i class="fas fa-link"></i>
+                <div class="p-6 bg-blue-50 rounded-xl">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-6">
+                        <i class="fas fa-chart-line text-xl"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-4">Interactive Flipbook</h3>
-                    <p>Share your magazine with a digital flipbook link that offers an immersive reading experience and drives traffic back to your website.</p>
+                    <h3 class="text-xl font-bold mb-4">Conversion-Focused</h3>
+                    <p class="text-gray-600">Strategic CTAs and links throughout the magazine drive readers back to your website or landing pages.</p>
                 </div>
                 
-                <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-blue-600 text-4xl mb-4">
-                        <i class="fas fa-chart-line"></i>
+                <div class="p-6 bg-blue-50 rounded-xl">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-6">
+                        <i class="fas fa-share-alt text-xl"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-4">Performance Analytics</h3>
-                    <p>Track views and clicks on your magazine to measure engagement and effectiveness of your content.</p>
+                    <h3 class="text-xl font-bold mb-4">Easy Sharing</h3>
+                    <p class="text-gray-600">Embed on your website, share on social media, or email directly to your subscribers with a simple link.</p>
                 </div>
                 
-                <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-blue-600 text-4xl mb-4">
-                        <i class="fas fa-ad"></i>
+                <div class="p-6 bg-blue-50 rounded-xl">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-6">
+                        <i class="fas fa-mobile-alt text-xl"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-4">Ad Space Management</h3>
-                    <p>Include ads from partners or self-promotions, with optional white-labeling for paid tiers.</p>
+                    <h3 class="text-xl font-bold mb-4">Mobile Responsive</h3>
+                    <p class="text-gray-600">Your magazine looks great on any device with our interactive flipbook technology.</p>
                 </div>
                 
-                <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition">
-                    <div class="text-blue-600 text-4xl mb-4">
-                        <i class="fas fa-calendar-alt"></i>
+                <div class="p-6 bg-blue-50 rounded-xl">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-6">
+                        <i class="fas fa-sync text-xl"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-4">Monthly Activation</h3>
-                    <p>Fresh content every month keeps your audience engaged with minimal effort on your part.</p>
+                    <h3 class="text-xl font-bold mb-4">Regular Updates</h3>
+                    <p class="text-gray-600">Get a fresh magazine every month with your latest content, keeping your audience engaged.</p>
                 </div>
             </div>
         </div>
     </section>
-
-    <!-- How It Works Section -->
-    <section id="how-it-works" class="py-20">
+    
+    <!-- How it Works Section -->
+    <section id="how-it-works" class="py-20 bg-gray-50">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center mb-16">How It Works</h2>
+            <h2 class="text-3xl font-bold text-center mb-16">How Magazinify AI™ Works</h2>
             
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row items-center mb-16">
@@ -166,8 +251,8 @@
                         </div>
                     </div>
                     <div class="md:w-2/3">
-                        <h3 class="text-xl font-bold mb-2">Purchase a Plan</h3>
-                        <p>Choose between our Basic (12 pages) or Pro (24 pages) plan based on your needs.</p>
+                        <h3 class="text-xl font-bold mb-2">Website Connection</h3>
+                        <p>Connect your website URL and customize your branding preferences in your Magazinify dashboard.</p>
                     </div>
                 </div>
                 
@@ -178,8 +263,8 @@
                         </div>
                     </div>
                     <div class="md:w-2/3">
-                        <h3 class="text-xl font-bold mb-2">Submit Your Website</h3>
-                        <p>Enter your website URL and optionally upload brand assets to customize your magazine.</p>
+                        <h3 class="text-xl font-bold mb-2">Content Analysis</h3>
+                        <p>Our system analyzes your website to identify key pages, blog posts, and content themes.</p>
                     </div>
                 </div>
                 
@@ -231,253 +316,211 @@
                 <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden">
                     <div class="p-8">
                         <h3 class="text-2xl font-bold mb-4">Basic</h3>
-                        <div class="text-4xl font-bold mb-6">$99<span class="text-lg font-normal text-gray-600">/month</span></div>
-                        <p class="text-gray-600 mb-8">Perfect for small businesses just getting started.</p>
+                        <div class="text-4xl font-bold mb-6">$99<span class="text-lg text-gray-600 font-normal">/mo</span></div>
+                        <p class="text-gray-600 mb-8">Perfect for small businesses looking to get started with digital magazines.</p>
+                        
                         <ul class="space-y-3 mb-8">
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                12-page magazine
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>12-page magazine</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Interactive flipbook link
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Monthly generation</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Monthly activation
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Basic analytics</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Basic analytics
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Custom branding</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Standard image quality
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Shareable link</span>
                             </li>
                         </ul>
-                    </div>
-                    <div class="px-8 pb-8">
-                        <a href="#signup-basic" class="block w-full py-3 rounded-lg bg-blue-600 text-white text-center font-bold hover:bg-blue-700 transition">Get Started</a>
+                        
+                        <a href="#signup" class="block text-center py-3 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">Get Started</a>
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden transform scale-105 border-2 border-blue-500">
-                    <div class="bg-blue-500 text-white text-center py-2 text-sm font-bold">MOST POPULAR</div>
-                    <div class="p-8">
+                <div class="bg-white rounded-xl shadow-lg relative overflow-hidden border-2 border-blue-600 transform scale-105">
+                    <div class="absolute top-0 inset-x-0 bg-blue-600 text-white text-center py-2 font-semibold">
+                        Most Popular
+                    </div>
+                    <div class="p-8 pt-14">
                         <h3 class="text-2xl font-bold mb-4">Pro</h3>
-                        <div class="text-4xl font-bold mb-6">$199<span class="text-lg font-normal text-gray-600">/month</span></div>
-                        <p class="text-gray-600 mb-8">For businesses ready to make a bigger impact.</p>
+                        <div class="text-4xl font-bold mb-6">$199<span class="text-lg text-gray-600 font-normal">/mo</span></div>
+                        <p class="text-gray-600 mb-8">For growing businesses seeking more content and advanced features.</p>
+                        
                         <ul class="space-y-3 mb-8">
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                24-page magazine
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>24-page magazine</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Interactive flipbook link
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Bi-weekly generation</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Monthly activation
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Advanced analytics</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Advanced analytics
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Custom branding</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Premium image quality
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Email integration</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Optional video links
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                More ad slots
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Content approval</span>
                             </li>
                         </ul>
-                    </div>
-                    <div class="px-8 pb-8">
-                        <a href="#signup-pro" class="block w-full py-3 rounded-lg bg-blue-600 text-white text-center font-bold hover:bg-blue-700 transition">Get Started</a>
+                        
+                        <a href="#signup" class="block text-center py-3 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">Get Started</a>
                     </div>
                 </div>
                 
                 <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden">
                     <div class="p-8">
-                        <h3 class="text-2xl font-bold mb-4">Custom</h3>
-                        <div class="text-4xl font-bold mb-6">Custom<span class="text-lg font-normal text-gray-600"> pricing</span></div>
-                        <p class="text-gray-600 mb-8">Tailored solutions for specific industries.</p>
+                        <h3 class="text-2xl font-bold mb-4">Enterprise</h3>
+                        <div class="text-4xl font-bold mb-6">$499<span class="text-lg text-gray-600 font-normal">/mo</span></div>
+                        <p class="text-gray-600 mb-8">Comprehensive solution for larger organizations with custom needs.</p>
+                        
                         <ul class="space-y-3 mb-8">
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Realtor-ready layouts
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>36+ page magazine</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Multiple listings support
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Weekly generation</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Advanced brand control
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Premium analytics</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Optional custom domain
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Custom templates</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                White label options
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>CRM integration</span>
                             </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                Priority support
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>White-label option</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                                <span>Dedicated support</span>
                             </li>
                         </ul>
-                    </div>
-                    <div class="px-8 pb-8">
-                        <a href="#contact-sales" class="block w-full py-3 rounded-lg border border-blue-600 text-blue-600 text-center font-bold hover:bg-blue-50 transition">Contact Sales</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials Section -->
-    <section class="py-20">
-        <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center mb-16">What Our Customers Say</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="bg-white p-8 rounded-xl shadow-md">
-                    <div class="text-yellow-500 flex mb-4">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <p class="text-gray-600 mb-6">"Magazinify AI has transformed how I connect with clients. My monthly magazine gives me instant credibility and keeps my properties top of mind."</p>
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 rounded-full bg-blue-100 mr-4"></div>
-                        <div>
-                            <div class="font-bold">Sarah Johnson</div>
-                            <div class="text-sm text-gray-600">Real Estate Agent</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white p-8 rounded-xl shadow-md">
-                    <div class="text-yellow-500 flex mb-4">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <p class="text-gray-600 mb-6">"Our spa magazine has become our best marketing tool. Clients love the self-care tips and special offers. The ROI has been incredible."</p>
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 rounded-full bg-blue-100 mr-4"></div>
-                        <div>
-                            <div class="font-bold">Michael Chen</div>
-                            <div class="text-sm text-gray-600">Wellness Spa Owner</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white p-8 rounded-xl shadow-md">
-                    <div class="text-yellow-500 flex mb-4">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star-half-alt"></i>
-                    </div>
-                    <p class="text-gray-600 mb-6">"As a solo founder, creating content was my biggest challenge. Magazinify AI generates professional content that looks like I have a full marketing team."</p>
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 rounded-full bg-blue-100 mr-4"></div>
-                        <div>
-                            <div class="font-bold">Jessica Williams</div>
-                            <div class="text-sm text-gray-600">Tech Startup Founder</div>
-                        </div>
+                        
+                        <a href="#contact" class="block text-center py-3 px-6 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-700 transition">Contact Sales</a>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-
-    <!-- CTA Section -->
-    <section class="py-20 gradient-bg text-white">
+    
+    <!-- Call to Action -->
+    <section id="signup" class="py-20 gradient-bg text-white">
         <div class="container mx-auto px-6 text-center">
-            <h2 class="text-3xl font-bold mb-8">Ready to Transform Your Business Content?</h2>
-            <p class="text-xl mb-10 max-w-2xl mx-auto">Join thousands of businesses using Magazinify AI™ to create engaging content that builds authority and drives results.</p>
-            <a href="#get-started" class="inline-block px-8 py-3 rounded-lg bg-white text-blue-600 font-bold text-center hover:bg-blue-100 transition">Get Started Today</a>
+            <h2 class="text-3xl font-bold mb-8">Ready to Transform Your Content?</h2>
+            <p class="text-xl mb-10 max-w-3xl mx-auto">Join thousands of businesses using Magazinify AI™ to engage their audience and drive more traffic to their websites.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#signup" class="bg-white text-blue-600 hover:bg-blue-100 px-8 py-4 rounded-lg font-semibold text-center transition">Start Your 7-Day Free Trial</a>
+                <a href="#demo" class="border border-white hover:bg-white/10 px-8 py-4 rounded-lg font-semibold text-center transition">See Demo</a>
+            </div>
         </div>
     </section>
-
+    
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-12">
         <div class="container mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
-                    <div class="text-2xl font-bold mb-6">Magazinify AI<span class="text-sm align-top">™</span></div>
-                    <p class="text-gray-400">Transforming business websites into engaging, professional digital magazines.</p>
+                    <div class="logo flex items-center gap-2 mb-6">
+                        <img src="logo192.png" alt="Magazinify AI Logo" class="logo-img">
+                        <div class="text-xl font-bold">Magazinify AI<span class="text-xs align-top">™</span></div>
+                    </div>
+                    <p class="text-gray-400 mb-6">AI-powered magazine generation for modern businesses.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                    </div>
                 </div>
                 
                 <div>
-                    <h4 class="text-lg font-bold mb-6">Quick Links</h4>
+                    <h4 class="text-lg font-semibold mb-6">Product</h4>
                     <ul class="space-y-3">
                         <li><a href="#features" class="text-gray-400 hover:text-white transition">Features</a></li>
                         <li><a href="#how-it-works" class="text-gray-400 hover:text-white transition">How It Works</a></li>
                         <li><a href="#pricing" class="text-gray-400 hover:text-white transition">Pricing</a></li>
-                        <li><a href="#contact" class="text-gray-400 hover:text-white transition">Contact</a></li>
+                        <li><a href="#demo" class="text-gray-400 hover:text-white transition">Demo</a></li>
                     </ul>
                 </div>
                 
                 <div>
-                    <h4 class="text-lg font-bold mb-6">Legal</h4>
+                    <h4 class="text-lg font-semibold mb-6">Support</h4>
                     <ul class="space-y-3">
-                        <li><a href="#privacy" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
-                        <li><a href="#terms" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
-                        <li><a href="#gdpr" class="text-gray-400 hover:text-white transition">GDPR Compliance</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Help Center</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Documentation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">API</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Contact</a></li>
                     </ul>
                 </div>
                 
                 <div>
-                    <h4 class="text-lg font-bold mb-6">Connect</h4>
-                    <div class="flex space-x-4 mb-6">
-                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-linkedin"></i></a>
-                    </div>
-                    <p class="text-gray-400">Email: info@magazinify.ai</p>
+                    <h4 class="text-lg font-semibold mb-6">Contact</h4>
+                    <ul class="space-y-3 text-gray-400">
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt mt-1 mr-3 w-4 text-center"></i>
+                            <span>123 AI Boulevard, San Francisco, CA 94107</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-3 w-4 text-center"></i>
+                            <span>hello@magazinify.ai</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone mr-3 w-4 text-center"></i>
+                            <span>(555) 123-4567</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
             
-            <div class="pt-8 border-t border-gray-700 text-center text-gray-400">
-                <p>&copy; 2025 Magazinify AI™. All rights reserved.</p>
+            <div class="border-t border-gray-700 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-400">© 2025 Magazinify AI™. All rights reserved.</p>
+                <div class="mt-4 md:mt-0 flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a>
+                </div>
             </div>
         </div>
     </footer>
-
+    
     <script>
-        // Basic interactive elements
-        document.addEventListener('DOMContentLoaded', function() {
-            // Smooth scrolling for anchor links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    
-                    if(this.getAttribute('href') === '#') return;
-                    
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if(target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth'
-                        });
-                    }
-                });
+        // Simple scroll animation for page navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    window.scrollTo({
+                        top: target.offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
             });
         });
     </script>
