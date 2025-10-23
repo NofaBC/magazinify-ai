@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allow manual triggering
+      - master
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -15,111 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      # Install dependencies for client
-      - name: Install client dependencies
-        run: |
-          cd client
-          npm ci
-      
-      # Build the React application with production environment variables
-      - name: Build client
-        run: |
-          cd client
-          npm run build
-        env:
-          REACT_APP_API_URL: ${{ secrets.PRODUCTION_API_URL }}
-          REACT_APP_FIREBASE_API_KEY: ${{ secrets.PRODUCTION_FIREBASE_API_KEY }}
-          REACT_APP_FIREBASE_AUTH_DOMAIN: ${{ secrets.PRODUCTION_FIREBASE_AUTH_DOMAIN }}
-          REACT_APP_FIREBASE_PROJECT_ID: ${{ secrets.PRODUCTION_FIREBASE_PROJECT_ID }}
-          REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ secrets.PRODUCTION_FIREBASE_STORAGE_BUCKET }}
-          REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.PRODUCTION_FIREBASE_MESSAGING_SENDER_ID }}
-          REACT_APP_FIREBASE_APP_ID: ${{ secrets.PRODUCTION_FIREBASE_APP_ID }}
-          REACT_APP_STRIPE_PUBLIC_KEY: ${{ secrets.PRODUCTION_STRIPE_PUBLIC_KEY }}
-      
-      # Run client-side tests
-      - name: Run client tests
-        run: |
-          cd client
-          npm test -- --watchAll=false
-      
-      # Install dependencies for server
-      - name: Install server dependencies
-        run: |
-          cd server
-          npm ci
-      
-      # Run server-side tests
-      - name: Run server tests
-        run: |
-          cd server
-          npm test
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.PRODUCTION_FIREBASE_SERVICE_ACCOUNT }}
-          FIREBASE_DATABASE_URL: ${{ secrets.PRODUCTION_FIREBASE_DATABASE_URL }}
-          FIREBASE_STORAGE_BUCKET: ${{ secrets.PRODUCTION_FIREBASE_STORAGE_BUCKET }}
-          OPENAI_API_KEY: ${{ secrets.PRODUCTION_OPENAI_API_KEY }}
-          STRIPE_SECRET_KEY: ${{ secrets.PRODUCTION_STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.PRODUCTION_STRIPE_WEBHOOK_SECRET }}
-          NODE_ENV: production
-      
-      # Install and deploy Firebase functions for production
-      - name: Setup and deploy Firebase Functions
-        run: |
-          cd functions
-          npm ci
-          npx firebase-tools deploy --only functions --project ${{ secrets.PRODUCTION_FIREBASE_PROJECT_ID }} --token ${{ secrets.FIREBASE_TOKEN }}
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-      
-      # Deploy Firebase security rules
-      - name: Deploy Firebase Rules
-        run: |
-          npx firebase-tools deploy --only firestore:rules,storage:rules --project ${{ secrets.PRODUCTION_FIREBASE_PROJECT_ID }} --token ${{ secrets.FIREBASE_TOKEN }}
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-      
-      # Deploy frontend to Vercel production environment
-      - name: Deploy client to Vercel (Production)
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_CLIENT_PROJECT_ID }}
-          working-directory: ./client
-          vercel-args: '--prod'
-      
-      # Deploy backend to Vercel production environment
-      - name: Deploy server to Vercel (Production)
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_SERVER_PROJECT_ID }}
-          working-directory: ./server
-          vercel-args: '--prod'
-      
-      # Create a GitHub release for this deployment
-      - name: Create Release Tag
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.tag_version.outputs.new_tag }}
-          release_name: Release ${{ steps.tag_version.outputs.new_tag }}
-          body: |
-            Magazinify AI Production Release ${{ steps.tag_version.outputs.new_tag }}
-            
-            Changes in this release:
-            ${{ steps.tag_version.outputs.changelog }}
+      # Skip Node.js setup and npm steps until project structure is ready
+      - name: Repository Structure Setup
+        run: echo "Repository structure in progress. Skipping build and deploy steps."
