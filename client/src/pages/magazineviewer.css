@@ -1,0 +1,103 @@
+/* MagazineViewer.css */
+
+.magazine-viewer-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: 'Arial', sans-serif;
+}
+
+.viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #eee;
+}
+
+.viewer-header h1 {
+  font-size: 2rem;
+  color: #34495e;
+  margin: 0;
+}
+
+.viewer-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.download-pdf {
+  background-color: #e74c3c; /* Red */
+  color: white;
+}
+
+.download-pdf:hover {
+  background-color: #c0392b;
+}
+
+.share {
+  background-color: #3498db; /* Blue */
+  color: white;
+}
+
+.share:hover {
+  background-color: #2980b9;
+}
+
+.flipbook-section {
+  margin-bottom: 30px;
+  background-color: #f4f7f9;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  min-height: 70vh; /* Ensure the viewer has a decent size */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flipbook-placeholder {
+  padding: 50px;
+  text-align: center;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.viewer-footer {
+  text-align: center;
+  padding: 15px;
+  border-top: 1px solid #eee;
+}
+
+.status-published {
+  color: #2ecc71;
+  font-weight: bold;
+}
+
+.viewer-loading,
+.viewer-error {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.2rem;
+  color: #7f8c8d;
+}
+
+@media (max-width: 600px) {
+  .viewer-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .viewer-actions {
+    margin-top: 10px;
+  }
