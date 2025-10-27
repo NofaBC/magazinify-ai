@@ -1,0 +1,138 @@
+/* Home.css - Minimal styling for the React Home page placeholder */
+
+.home-page-container {
+  font-family: 'Arial', sans-serif;
+  color: #333;
+}
+
+/* Hero Section */
+.hero-section {
+  background-color: #f4f7f9;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.hero-content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-content h1 {
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.tagline {
+  font-size: 1.2rem;
+  color: #7f8c8d;
+  margin-bottom: 30px;
+}
+
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.cta-primary, .cta-secondary {
+  padding: 12px 25px;
+  border-radius: 5px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background-color 0.3s, opacity 0.3s;
+}
+
+.cta-primary {
+  background-color: #3498db;
+  color: white;
+}
+
+.cta-primary:hover {
+  background-color: #2980b9;
+}
+
+.cta-secondary {
+  background-color: transparent;
+  color: #3498db;
+  border: 2px solid #3498db;
+}
+
+.cta-secondary:hover {
+  background-color: #3498db;
+  color: white;
+}
+
+/* Features Section */
+.features-section {
+  padding: 60px 20px;
+  text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.features-section h2 {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin-bottom: 40px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+}
+
+.feature-card {
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  text-align: left;
+  border-top: 5px solid #2ecc71;
+}
+
+.feature-card h3 {
+  color: #2ecc71;
+  margin-top: 0;
+}
+
+/* Testimonial Section */
+.testimonial-section {
+  background-color: #ecf0f1;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.testimonial-section h2 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.testimonial-section blockquote {
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 1.3rem;
+  font-style: italic;
+  color: #555;
+  border-left: 4px solid #3498db;
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+/* Footer */
+.home-footer {
+  padding: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+@media (max-width: 600px) {
+  .hero-content h1 {
+    font-size: 2rem;
+  }
+  .cta-buttons {
+    flex-direction: column;
+  }
+}
