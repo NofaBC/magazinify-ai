@@ -1,0 +1,118 @@
+/* Dashboard.css */
+
+.dashboard-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: 'Arial', sans-serif;
+}
+
+.dashboard-header {
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #eee;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  color: #34495e;
+  margin-bottom: 20px;
+}
+
+.status-widgets {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.widget {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px 20px;
+  flex: 1;
+  min-width: 200px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.widget h3 {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin: 0 0 5px 0;
+  text-transform: uppercase;
+}
+
+.widget-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #3498db;
+  margin: 0;
+}
+
+/* Quick Actions Section */
+.quick-actions-section {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.quick-actions-section h2 {
+  font-size: 1.5rem;
+  color: #34495e;
+  margin-bottom: 15px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.action-button.primary {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.action-button.primary:hover {
+  background-color: #27ae60;
+}
+
+.action-button.secondary {
+  background-color: #f39c12;
+  color: white;
+}
+
+.action-button.secondary:hover {
+  background-color: #e67e22;
+}
+
+.action-button.tertiary {
+  background-color: #bdc3c7;
+  color: #34495e;
+}
+
+.action-button.tertiary:hover {
+  background-color: #95a5a6;
+}
+
+.dashboard-loading {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.2rem;
+  color: #7f8c8d;
+}
+
+@media (max-width: 768px) {
+  .status-widgets {
+    flex-direction: column;
+  }
+}
