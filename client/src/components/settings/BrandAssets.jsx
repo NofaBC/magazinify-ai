@@ -135,3 +135,5 @@ const BrandAssets = () => {
     </div>
   );
 };
+
+export default BrandAssets;
