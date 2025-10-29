@@ -107,3 +107,5 @@ const ArticleEditor = ({ articleId }) => {
     </div>
   );
 };
+
+export default ArticleEditor;
