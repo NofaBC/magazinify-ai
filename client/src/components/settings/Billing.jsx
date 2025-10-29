@@ -120,3 +120,5 @@ const Billing = () => {
     </div>
   );
 };
+
+export default Billing;
