@@ -105,3 +105,5 @@ const MagazineList = () => {
     </div>
   );
 };
+
+export default MagazineList;
