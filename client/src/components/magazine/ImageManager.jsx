@@ -124,3 +124,5 @@ const ImageManager = ({ magazineId }) => {
     </div>
   );
 };
+
+export default ImageManager;
