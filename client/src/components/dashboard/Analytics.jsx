@@ -121,3 +121,5 @@ const Analytics = ({ magazineId }) => {
     </div>
   );
 };
+
+export default Analytics;
