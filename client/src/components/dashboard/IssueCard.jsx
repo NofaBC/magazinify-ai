@@ -34,3 +34,5 @@ const IssueCard = ({ magazine, onEdit, onViewAnalytics, onDownload }) => {
     </div>
   );
 };
+
+export default IssueCard;
