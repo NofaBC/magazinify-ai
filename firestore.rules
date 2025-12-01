@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+    function getTenantId() {
+      return string(/databases/(default)/documents/tenants/(.*)/.*).split('/')[4];
+    }
+    function isOwnerOfTenant(tenantId) {
+      return isAuthenticated() && (
+        request.auth.uid == tenantId ||
+        request.auth.token.tenantId == tenantId ||
+        isAdmin()
+      );
+    }
+    function isValidMagazineDoc() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'tenantId', 'pages', 'status', 'createdAt']) &&
+             data.tenantId == getTenantId() &&
+             data.status in ['draft', 'generating', 'published'];
+    }
+    match /tenants/{tenantId}/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    match /tenants/{tenantId}/magazines/{magazineId} {
+      allow create: if isOwnerOfTenant(tenantId) && isValidMagazineDoc();
+      allow update: if isOwnerOfTenant(tenantId) && resource.data.tenantId == tenantId;
+      allow read: if isOwnerOfTenant(tenantId);
+      allow get: if resource.data.status == 'published';
+      allow list: if false;
+    }
+    match /tenants/{tenantId}/users/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isOwnerOfTenant(tenantId) && request.auth.uid == tenantId;
+    }
+    match /tenants/{tenantId}/settings/{settingsId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == tenantId;
+    }
+  }
+}
