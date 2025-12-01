@@ -1,4 +1,3 @@
-cat > tsconfig.json << 'EOF'
 {
   "compilerOptions": {
     "target": "ES2017",
@@ -14,22 +13,11 @@ cat > tsconfig.json << 'EOF'
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "plugins": [{ "name": "next" }],
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"]
-    }
+    "paths": { "@/*": ["./*"] }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": [
     "node_modules",
     ".next",
@@ -39,9 +27,6 @@ cat > tsconfig.json << 'EOF'
     "functions/node_modules",
     "functions/lib",
     "firebase-debug.log",
-    "firebase-debug.*.log",
-    "**/*.test.ts",
-    "**/*.spec.ts"
+    "firebase-debug.*.log"
   ]
 }
-EOF

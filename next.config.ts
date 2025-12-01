@@ -1,20 +1,14 @@
-cat > next.config.ts << 'EOF'
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Exclude Firebase Functions from Next.js build completely
+  // Completely exclude Firebase Functions from Next.js build
   experimental: {
     outputFileTracingExcludes: {
-      '*': ['./functions/**/*', './functions/**'],
+      '*': ['./functions/**/*'],
     },
   },
   
-  // Ensure TypeScript respects our tsconfig.json exclusions
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-  
-  // Webpack fallback to ignore firebase-functions if needed
+  // Webpack config to ignore firebase-functions module
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -23,15 +17,14 @@ const nextConfig: NextConfig = {
     return config;
   },
   
-  // Standard Next.js config
+  // Image domains for magazine assets
   images: {
     domains: [
       'images.unsplash.com',
       'via.placeholder.com',
-      'lh3.googleusercontent.com', // For user avatars
+      'lh3.googleusercontent.com',
     ],
   },
 };
 
 export default nextConfig;
-EOF
