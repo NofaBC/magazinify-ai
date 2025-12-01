@@ -1,11 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Completely exclude Firebase Functions from Next.js build
-  experimental: {
-    outputFileTracingExcludes: {
-      '*': ['./functions/**/*'],
-    },
+  // Exclude Firebase Functions from Next.js build
+  outputFileTracingExcludes: {
+    '*': ['./functions/**/*'],
   },
   
   // Webpack config to ignore firebase-functions module
@@ -17,12 +15,13 @@ const nextConfig: NextConfig = {
     return config;
   },
   
-  // Image domains for magazine assets
+  // Image domains (using remotePatterns for Next.js 16)
   images: {
-    domains: [
-      'images.unsplash.com',
-      'via.placeholder.com',
-      'lh3.googleusercontent.com',
+    remotePatterns: [
+      { hostname: 'images.unsplash.com' },
+      { hostname: 'via.placeholder.com' },
+      { hostname: 'lh3.googleusercontent.com' },
+      { hostname: 'oaidalleapiprodscus.blob.core.windows.net' }, // DALL-E images
     ],
   },
 };
