@@ -1,13 +1,10 @@
-cat > next.config.ts << 'EOF'
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Exclude Firebase Functions from Next.js build
   outputFileTracingExcludes: {
     '*': ['./functions/**/*'],
   },
   
-  // Webpack config to ignore firebase-functions module
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -16,7 +13,6 @@ const nextConfig: NextConfig = {
     return config;
   },
   
-  // Image domains using remotePatterns for Next.js 16
   images: {
     remotePatterns: [
       { hostname: 'images.unsplash.com' },
@@ -28,4 +24,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-EOF
