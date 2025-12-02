@@ -1,3 +1,4 @@
+cat > next.config.ts << 'EOF'
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -15,15 +16,16 @@ const nextConfig: NextConfig = {
     return config;
   },
   
-  // Image domains (using remotePatterns for Next.js 16)
+  // Image domains using remotePatterns for Next.js 16
   images: {
     remotePatterns: [
       { hostname: 'images.unsplash.com' },
       { hostname: 'via.placeholder.com' },
       { hostname: 'lh3.googleusercontent.com' },
-      { hostname: 'oaidalleapiprodscus.blob.core.windows.net' }, // DALL-E images
+      { hostname: 'oaidalleapiprodscus.blob.core.windows.net' },
     ],
   },
 };
 
 export default nextConfig;
+EOF
