@@ -1,16 +1,15 @@
-cat > next.config.ts << 'EOF'
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Force Webpack (disable Turbopack completely)
+  // Disable Turbopack completely
   turbopack: false,
   
-  // Exclude Firebase Functions from Next.js build
+  // Exclude Firebase Functions
   outputFileTracingExcludes: {
     '*': ['./functions/**/*'],
   },
   
-  // Image domains for Next.js 16
+  // Image domains
   images: {
     remotePatterns: [
       { hostname: 'images.unsplash.com' },
@@ -22,9 +21,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-EOF
-
-# Commit and deploy
-git add next.config.ts
-git commit -m "fix: Final clean config - remove webpack function"
-git push origin main
