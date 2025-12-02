@@ -1,15 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Disable Turbopack completely
-  turbopack: false,
-  
-  // Exclude Firebase Functions
+  // Exclude Firebase Functions from Next.js build
   outputFileTracingExcludes: {
     '*': ['./functions/**/*'],
   },
   
-  // Image domains
+  // Image domains for Next.js 16
   images: {
     remotePatterns: [
       { hostname: 'images.unsplash.com' },
