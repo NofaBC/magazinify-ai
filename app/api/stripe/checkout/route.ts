@@ -7,8 +7,8 @@ export async function POST(req: NextRequest) {
 
     const priceId =
       plan === 'basic'
-        ? process.env.STRIPE_BASIC_PRICE_ID
-        : process.env.STRIPE_PRO_PRICE_ID;
+        ? (process.env.STRIPE_BASIC_PRICE_ID ?? process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID)
+        : (process.env.STRIPE_PRO_PRICE_ID ?? process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID);
 
     if (!priceId) {
       return NextResponse.json(

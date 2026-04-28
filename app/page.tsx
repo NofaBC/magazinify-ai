@@ -80,7 +80,7 @@ export default function Home() {
             href="/register"
             className="inline-flex items-center justify-center gap-2 border border-zinc-200 px-8 py-3.5 rounded-lg text-base font-medium hover:bg-zinc-50 transition-colors"
           >
-            Start Free Preview
+            Get Started
           </Link>
         </div>
       </section>
