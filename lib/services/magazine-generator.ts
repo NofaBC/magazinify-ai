@@ -27,11 +27,19 @@ export async function generateMagazineIssue(
     brandPreferences,
   } = request;
 
+  const subscriberAds = request.adSlots
+    ?.filter((ad) => ad.imageUrl)
+    .map((ad) => ({ imageUrl: ad.imageUrl!, linkUrl: ad.linkUrl, advertiserName: ad.advertiserName })) ?? [];
+
   const pageCount = plan === 'pro' ? 24 : 12;
-  // Fewer, deeper articles that span multiple pages
-  // Basic 12pg: 1 main (3 pages) + 3 supporting (2 pages each) + cover + TOC + back = 12
-  // Pro 24pg: 1 main (3 pages) + 7 supporting (2 pages each) + cover + TOC + editorial + back + 2 ad = 24
-  const supportingCount = plan === 'pro' ? 7 : 3;
+  // Fixed pages: cover + TOC + back cover = 3
+  // Subscriber ads take 1 page each
+  // Remaining pages filled with articles (each article = 2-page spread, main = 3 pages)
+  const fixedPages = 3;
+  const adPages = subscriberAds.length;
+  const contentPages = pageCount - fixedPages - adPages;
+  // Main article = 3 pages, each supporting = 2 pages
+  const supportingCount = Math.max(1, Math.floor((contentPages - 3) / 2));
 
   logger.info('Starting magazine generation', { tenantId, yearMonth, plan });
 
@@ -68,7 +76,8 @@ export async function generateMagazineIssue(
     coverImageUrl,
     pageCount,
     plan,
-    brandPreferences
+    brandPreferences,
+    subscriberAds
   );
 
   // 6. Build article index for future dedup
@@ -79,10 +88,16 @@ export async function generateMagazineIssue(
     keywords: a.keywords,
   }));
 
-  // 7. Build ad slots (Pro only)
-  const adSlots: AdSlot[] = plan === 'pro'
-    ? buildDefaultAdSlots(businessName, businessUrl, pageCount)
-    : [];
+  // 7. Build ad slots from subscriber ads
+  const adSlots: AdSlot[] = subscriberAds.map((ad, i) => ({
+    slotId: `ad-${i + 1}`,
+    pageNumber: 0,  // Actual position determined during page assembly
+    position: 'full-page' as const,
+    imageUrl: ad.imageUrl,
+    linkUrl: ad.linkUrl,
+    advertiserName: ad.advertiserName,
+    isDefault: false,
+  }));
 
   const issue: MagazineIssue = {
     id: `${tenantId}_${yearMonth}`,
@@ -259,6 +274,12 @@ Respond with valid JSON only:
 
 // ── Page assembly (premium multi-page layouts) ─────────────
 
+interface SubscriberAdInput {
+  imageUrl: string;
+  linkUrl?: string;
+  advertiserName?: string;
+}
+
 function assemblePages(
   businessName: string,
   businessUrl: string,
@@ -267,7 +288,8 @@ function assemblePages(
   coverImageUrl: string | null,
   targetPageCount: number,
   plan: string,
-  brandPreferences?: BrandPreferences
+  brandPreferences?: BrandPreferences,
+  subscriberAds: SubscriberAdInput[] = []
 ): MagazinePage[] {
   const pages: MagazinePage[] = [];
   const [year, month] = yearMonth.split('-');
@@ -380,19 +402,16 @@ function assemblePages(
     `, undefined, article.keywords);
   });
 
-  // ===== PRO ONLY: AD PAGES =====
-  if (plan === 'pro') {
-    while (pages.length < targetPageCount - 1) {
-      addPage('ad', 'Advertisement', `
-        <div style="display:flex; align-items:center; justify-content:center; height:100%; background:#fafafa; border-radius:8px;">
-          <div style="text-align:center;">
-            <p style="font-size:0.9rem; color:#bbb;">Advertisement Space</p>
-            <p style="font-size:0.75rem; color:#ddd;">Contact us for opportunities</p>
-          </div>
-        </div>
-      `);
-    }
-  }
+  // ===== SUBSCRIBER ADS (only when provided) =====
+  subscriberAds.forEach((ad) => {
+    addPage('ad', ad.advertiserName ?? 'Advertisement', `
+      <div style="display:flex; align-items:center; justify-content:center; height:100%; padding:1rem;">
+        ${ad.linkUrl ? `<a href="${ad.linkUrl}" target="_blank" rel="noopener noreferrer" style="display:block; width:100%; height:100%;">` : ''}
+          <img src="${ad.imageUrl}" alt="${ad.advertiserName ?? 'Advertisement'}" style="width:100%; height:100%; object-fit:contain; border-radius:8px;" />
+        ${ad.linkUrl ? '</a>' : ''}
+      </div>
+    `, ad.imageUrl);
+  });
 
   // ===== BACK COVER =====
   addPage('back-cover', 'Back Cover', `
@@ -430,26 +449,3 @@ function removeFirstNParagraphs(html: string, n: number): string {
   return tags.slice(n).join('') || '<p>Continued from previous page.</p>';
 }
 
-// ── Ad slots ──────────────────────────────────────────────
-
-function buildDefaultAdSlots(
-  businessName: string,
-  businessUrl: string,
-  pageCount: number
-): AdSlot[] {
-  const slots: AdSlot[] = [];
-  const adPositions = pageCount >= 24 ? [8, 14, 20] : [];
-
-  adPositions.forEach((pos, i) => {
-    slots.push({
-      slotId: `ad-${i + 1}`,
-      pageNumber: pos,
-      position: 'full-page',
-      linkUrl: businessUrl,
-      advertiserName: businessName,
-      isDefault: true,
-    });
-  });
-
-  return slots;
-}

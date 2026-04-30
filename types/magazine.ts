@@ -54,6 +54,13 @@ export interface MagazineIssue {
   shareableUrl?: string;
 }
 
+/** A subscriber-uploaded ad to insert into the magazine */
+export interface SubscriberAd {
+  imageUrl: string;
+  linkUrl?: string;
+  advertiserName?: string;
+}
+
 /** Input for triggering magazine generation */
 export interface GenerateIssueRequest {
   tenantId: string;
@@ -63,6 +70,7 @@ export interface GenerateIssueRequest {
   yearMonth: string;
   brandPreferences?: BrandPreferences;
   adSlots?: Partial<AdSlot>[];
+  subscriberAds?: SubscriberAd[];  // Ads uploaded by the subscriber
 }
 
 /** Brand customization preferences */
