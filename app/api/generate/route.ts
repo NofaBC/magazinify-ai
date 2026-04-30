@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
       plan: tenant.plan === 'custom' ? 'pro' : tenant.plan,
       yearMonth,
       brandPreferences: tenant.brandPreferences,
+      adSlots: body.adSlots ?? [],
     };
 
     // Generate the magazine
