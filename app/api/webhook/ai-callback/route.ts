@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTenant, getIssue } from '@/lib/services/firestore';
+import { getTenantAdmin, getIssueAdmin } from '@/lib/services/firestore-admin';
 import { sendIssueEmail } from '@/lib/services/email';
 import { cleanupTempAssets } from '@/lib/services/storage';
 
@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
 
     // Get tenant and issue data
     const [tenant, issue] = await Promise.all([
-      getTenant(tenantId),
-      getIssue(tenantId, yearMonth),
+      getTenantAdmin(tenantId),
+      getIssueAdmin(tenantId, yearMonth),
     ]);
 
     if (!tenant || !issue) {

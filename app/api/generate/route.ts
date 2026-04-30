@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateMagazineIssue } from '@/lib/services/magazine-generator';
-import { issueExists, createIssue, getTenant } from '@/lib/services/firestore';
+import {
+  getTenantAdmin,
+  issueExistsAdmin,
+  createIssueAdmin,
+} from '@/lib/services/firestore-admin';
 import { sendIssueEmail } from '@/lib/services/email';
-import { cleanupTempAssets } from '@/lib/services/storage';
 import { shareableUrl } from '@/lib/utils/tenant';
 import { getCurrentYearMonth } from '@/lib/utils/validation';
 import type { GenerateIssueRequest } from '@/types/magazine';
@@ -18,8 +21,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
     }
 
-    // Get tenant data
-    const tenant = await getTenant(tenantId);
+    // Get tenant data (server-side Admin SDK — bypasses rules)
+    const tenant = await getTenantAdmin(tenantId);
     if (!tenant) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
@@ -27,7 +30,7 @@ export async function POST(req: NextRequest) {
     const yearMonth = body.yearMonth ?? getCurrentYearMonth();
 
     // Monthly issue guard
-    const exists = await issueExists(tenantId, yearMonth);
+    const exists = await issueExistsAdmin(tenantId, yearMonth);
     if (exists) {
       return NextResponse.json(
         { error: `Issue for ${yearMonth} already exists` },
@@ -51,8 +54,8 @@ export async function POST(req: NextRequest) {
     // Add shareable URL
     issue.shareableUrl = shareableUrl(tenantId, yearMonth);
 
-    // Store in Firestore
-    await createIssue(tenantId, issue);
+    // Store in Firestore (Admin SDK — bypasses rules)
+    await createIssueAdmin(tenantId, issue);
 
     // Post-generation: send email + cleanup (non-blocking)
     sendIssueEmail({
@@ -62,7 +65,6 @@ export async function POST(req: NextRequest) {
       shareableUrl: issue.shareableUrl!,
     }).catch(() => {});
 
-    cleanupTempAssets(tenantId, 'temp').catch(() => {});
 
     return NextResponse.json({
       success: true,

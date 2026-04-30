@@ -1,7 +1,7 @@
 import { getOpenAI, AI_MODEL, MAX_ARTICLE_TOKENS } from '@/lib/config/ai';
 import { scrapeBusinessUrl } from './website-scraper';
 import { generateArticleImage, generateCoverImage } from './image-gen';
-import { getPreviousArticleIndices } from './firestore';
+import { getPreviousArticleIndicesAdmin } from './firestore-admin';
 import { logger } from '@/lib/utils/logger';
 import type {
   MagazineIssue,
@@ -35,8 +35,8 @@ export async function generateMagazineIssue(
   // 1. Scrape business website
   const scraped = await scrapeBusinessUrl(businessUrl);
 
-  // 2. Fetch previous article indices for dedup
-  const previousArticles = await getPreviousArticleIndices(tenantId, 6);
+  // 2. Fetch previous article indices for dedup (Admin SDK)
+  const previousArticles = await getPreviousArticleIndicesAdmin(tenantId, 6);
 
   // 3. Generate articles via AI
   const articles = await generateAllArticles(
