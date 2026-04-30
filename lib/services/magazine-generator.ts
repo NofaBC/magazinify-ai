@@ -190,8 +190,29 @@ async function generateArticle(
   isMain: boolean
 ): Promise<GeneratedArticle> {
   const systemPrompt = isMain
-    ? `You are an editorial writer for a professional digital magazine. Write a feature article about the business. The article should introduce the business, highlight its strengths, products/services, and include a clear call to action back to the business website. Write in HTML format (use <h2>, <p>, <strong>, <em>, <ul>, <li> tags). Make it engaging, informative, and SEO-friendly.`
-    : `You are an editorial writer for a professional digital magazine. Write a supporting article related to the business's industry, products, or services. The article should be educational, informative, and topically connected to what the business offers. Do NOT write directly about the business — write about topics that support and complement it. Write in HTML format (use <h2>, <p>, <strong>, <em>, <ul>, <li> tags). Make it SEO-friendly.`;
+    ? `You are a senior editorial writer for a premium professional digital magazine. Write a substantial, in-depth feature article about the business. This is a paid publication — the quality must reflect that.
+
+Requirements:
+- Write at least 500-700 words
+- Include a compelling introduction that hooks the reader
+- Cover the business story, mission, key products/services, and what makes them stand out
+- Use specific details, not generic filler
+- Include 2-3 subheadings (h3 tags) to break up sections
+- End with a strong call to action back to the business website
+- Write in HTML format (use <h2>, <h3>, <p>, <strong>, <em>, <ul>, <li> tags)
+- Tone should be magazine-quality editorial — engaging, authoritative, and polished
+- SEO-friendly with natural keyword usage`
+    : `You are a senior editorial writer for a premium professional digital magazine. Write a substantial, in-depth supporting article related to the business's industry, products, or services. This is a paid publication — the quality must reflect that.
+
+Requirements:
+- Write at least 400-600 words
+- The article should be educational, insightful, and genuinely useful to the reader
+- Topically connected to what the business offers, but NOT a direct ad for the business
+- Include real information, practical tips, industry insights, or expert-level knowledge
+- Use 2-3 subheadings (h3 tags) to structure the content
+- Write in HTML format (use <h2>, <h3>, <p>, <strong>, <em>, <ul>, <li> tags)
+- Tone should be magazine-quality editorial — informative, engaging, and authoritative
+- SEO-friendly with natural keyword usage`;
 
   const userPrompt = `Business context:
 ${businessContext}

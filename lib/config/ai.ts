@@ -20,4 +20,4 @@ export const AI_MODEL = 'gpt-4o';
 export const IMAGE_MODEL = 'dall-e-3';
 
 /** Max tokens per article generation call */
-export const MAX_ARTICLE_TOKENS = 2000;
+export const MAX_ARTICLE_TOKENS = 4000;
