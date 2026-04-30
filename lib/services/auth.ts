@@ -7,29 +7,29 @@ import {
   signInWithPopup,
   type User,
 } from 'firebase/auth';
-import { auth } from '@/lib/config/firebase';
+import { getFirebaseAuth } from '@/lib/config/firebase';
 
 export async function signUp(email: string, password: string) {
-  return createUserWithEmailAndPassword(auth, email, password);
+  return createUserWithEmailAndPassword(getFirebaseAuth(), email, password);
 }
 
 export async function signIn(email: string, password: string) {
-  return signInWithEmailAndPassword(auth, email, password);
+  return signInWithEmailAndPassword(getFirebaseAuth(), email, password);
 }
 
 export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
-  return signInWithPopup(auth, provider);
+  return signInWithPopup(getFirebaseAuth(), provider);
 }
 
 export async function signOut() {
-  return firebaseSignOut(auth);
+  return firebaseSignOut(getFirebaseAuth());
 }
 
 export function onAuth(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, callback);
+  return onAuthStateChanged(getFirebaseAuth(), callback);
 }
 
 export function getCurrentUser(): User | null {
-  return auth.currentUser;
+  return getFirebaseAuth().currentUser;
 }

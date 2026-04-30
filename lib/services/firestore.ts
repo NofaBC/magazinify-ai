@@ -11,14 +11,14 @@ import {
   limit,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '@/lib/config/firebase';
+import { getFirebaseDb } from '@/lib/config/firebase';
 import type { Tenant } from '@/types/tenant';
 import type { MagazineIssue, ArticleIndex } from '@/types/magazine';
 
 // ── Tenants ──────────────────────────────────────────────
 
 export async function createTenant(tenant: Tenant): Promise<void> {
-  await setDoc(doc(db, 'tenants', tenant.id), {
+  await setDoc(doc(getFirebaseDb(), 'tenants', tenant.id), {
     ...tenant,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -26,7 +26,7 @@ export async function createTenant(tenant: Tenant): Promise<void> {
 }
 
 export async function getTenant(tenantId: string): Promise<Tenant | null> {
-  const snap = await getDoc(doc(db, 'tenants', tenantId));
+  const snap = await getDoc(doc(getFirebaseDb(), 'tenants', tenantId));
   return snap.exists() ? (snap.data() as Tenant) : null;
 }
 
@@ -34,7 +34,7 @@ export async function updateTenant(
   tenantId: string,
   data: Partial<Tenant>
 ): Promise<void> {
-  await updateDoc(doc(db, 'tenants', tenantId), {
+  await updateDoc(doc(getFirebaseDb(), 'tenants', tenantId), {
     ...data,
     updatedAt: new Date().toISOString(),
   });
@@ -48,7 +48,7 @@ export async function issueExists(
   yearMonth: string
 ): Promise<boolean> {
   const snap = await getDoc(
-    doc(db, 'tenants', tenantId, 'issues', yearMonth)
+    doc(getFirebaseDb(), 'tenants', tenantId, 'issues', yearMonth)
   );
   return snap.exists();
 }
@@ -58,7 +58,7 @@ export async function createIssue(
   issue: MagazineIssue
 ): Promise<void> {
   await setDoc(
-    doc(db, 'tenants', tenantId, 'issues', issue.yearMonth),
+    doc(getFirebaseDb(), 'tenants', tenantId, 'issues', issue.yearMonth),
     issue
   );
 }
@@ -68,7 +68,7 @@ export async function getIssue(
   yearMonth: string
 ): Promise<MagazineIssue | null> {
   const snap = await getDoc(
-    doc(db, 'tenants', tenantId, 'issues', yearMonth)
+    doc(getFirebaseDb(), 'tenants', tenantId, 'issues', yearMonth)
   );
   return snap.exists() ? (snap.data() as MagazineIssue) : null;
 }
@@ -79,7 +79,7 @@ export async function updateIssue(
   data: Partial<MagazineIssue>
 ): Promise<void> {
   await updateDoc(
-    doc(db, 'tenants', tenantId, 'issues', yearMonth),
+    doc(getFirebaseDb(), 'tenants', tenantId, 'issues', yearMonth),
     data
   );
 }
@@ -89,7 +89,7 @@ export async function listIssues(
   maxResults = 12
 ): Promise<MagazineIssue[]> {
   const q = query(
-    collection(db, 'tenants', tenantId, 'issues'),
+    collection(getFirebaseDb(), 'tenants', tenantId, 'issues'),
     orderBy('yearMonth', 'desc'),
     limit(maxResults)
   );
