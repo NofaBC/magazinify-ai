@@ -28,7 +28,9 @@ export async function generateMagazineIssue(
   } = request;
 
   const pageCount = plan === 'pro' ? 24 : 12;
-  const articleCount = plan === 'pro' ? 8 : 5;
+  // Basic: cover + TOC + back cover = 3 fixed pages, rest are articles
+  // Pro: same fixed pages + ad slots at strategic positions
+  const articleCount = plan === 'pro' ? 18 : 9;
 
   logger.info('Starting magazine generation', { tenantId, yearMonth, plan });
 
@@ -69,8 +71,10 @@ export async function generateMagazineIssue(
     keywords: a.keywords,
   }));
 
-  // 7. Build ad slots (empty by default, ready for insertion)
-  const adSlots: AdSlot[] = buildDefaultAdSlots(businessName, businessUrl, pageCount);
+  // 7. Build ad slots (Pro only)
+  const adSlots: AdSlot[] = plan === 'pro'
+    ? buildDefaultAdSlots(businessName, businessUrl, pageCount)
+    : [];
 
   const issue: MagazineIssue = {
     id: `${tenantId}_${yearMonth}`,
@@ -310,19 +314,21 @@ function assemblePages(
     });
   });
 
-  // Fill remaining pages with NOFA editorial / ad placeholders
-  while (pages.length < targetPageCount - 1) {
-    pages.push({
-      pageNumber: pages.length + 1,
-      type: 'ad',
-      title: 'Advertisement',
-      content: `
-        <div style="text-align:center; padding:3rem 2rem; background:#f9f9f9; border-radius:8px;">
-          <p style="font-size:0.9rem; color:#999;">Advertisement Space</p>
-          <p style="font-size:0.8rem; color:#bbb;">Contact us for advertising opportunities</p>
-        </div>
-      `,
-    });
+  // Pro only: fill remaining pages with ad placeholders if needed
+  if (targetPageCount >= 24) {
+    while (pages.length < targetPageCount - 1) {
+      pages.push({
+        pageNumber: pages.length + 1,
+        type: 'ad',
+        title: 'Advertisement',
+        content: `
+          <div style="text-align:center; padding:3rem 2rem; background:#f9f9f9; border-radius:8px;">
+            <p style="font-size:0.9rem; color:#999;">Advertisement Space</p>
+            <p style="font-size:0.8rem; color:#bbb;">Contact us for advertising opportunities</p>
+          </div>
+        `,
+      });
+    }
   }
 
   // Last page: Back cover
