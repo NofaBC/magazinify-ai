@@ -44,8 +44,8 @@ export default function BillingPage() {
         <h3 className="font-semibold mb-2">Need to change plans?</h3>
         <p className="text-sm text-zinc-500">
           Contact us at{' '}
-          <a href="mailto:hello@magazinify.ai" className="text-zinc-900 font-medium hover:underline">
-            hello@magazinify.ai
+          <a href="mailto:supportdesk@nofabusinessconsulting.com" className="text-zinc-900 font-medium hover:underline">
+            supportdesk@nofabusinessconsulting.com
           </a>{' '}
           to upgrade, downgrade, or cancel your subscription.
         </p>

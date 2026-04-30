@@ -7,7 +7,7 @@ if (apiKey) {
   sgMail.setApiKey(apiKey);
 }
 
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL ?? 'hello@magazinify.ai';
+const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL ?? 'supportdesk@nofabusinessconsulting.com';
 
 /** Send the published issue link to the client */
 export async function sendIssueEmail(params: {
