@@ -59,11 +59,12 @@ export async function generateMagazineIssue(
     brandPreferences
   );
 
-  // 4. Generate images for ALL articles (premium feel)
-  const coverImageUrl = await generateCoverImage(businessName, yearMonth);
+  // 4. Generate images for ALL articles and persist to Firebase Storage
+  const coverImageUrl = await generateCoverImage(businessName, yearMonth, tenantId);
   await Promise.all(
-    articles.map(async (article) => {
-      article.imageUrl = (await generateArticleImage(article.imagePrompt)) ?? undefined;
+    articles.map(async (article, idx) => {
+      const storagePath = `tenants/${tenantId}/issues/${yearMonth}/article-${idx}.png`;
+      article.imageUrl = (await generateArticleImage(article.imagePrompt, storagePath)) ?? undefined;
     })
   );
 
@@ -354,21 +355,22 @@ function assemblePages(
     // Page 4: Article body (first half)
     const contentParts = splitContentInHalf(main.content);
     addPage('article', main.title, `
-      <div style="padding:0.5rem;">
-        <p style="text-transform:uppercase; font-size:0.6rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600; margin-bottom:0.5rem;">Feature Story — Continued</p>
-        <div style="font-size:0.88rem; line-height:1.7; color:#333;">${contentParts[0]}</div>
+      <div style="padding:0.8rem;">
+        <p style="text-transform:uppercase; font-size:0.65rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600; margin-bottom:0.8rem;">Feature Story — Continued</p>
+        <div style="font-size:0.95rem; line-height:1.8; color:#333;">${contentParts[0]}</div>
       </div>
     `, undefined, main.keywords);
 
     // Page 5: Article body (second half) + pull quote + CTA
     addPage('article', main.title, `
-      <div style="padding:0.5rem;">
+      <div style="padding:0.8rem;">
         ${main.pullQuote ? `
-          <blockquote style="margin:0 0 1rem 0; padding:1rem 1.2rem; border-left:3px solid ${brandColor}; background:${brandColor}08; border-radius:0 8px 8px 0; font-size:1rem; font-style:italic; color:#333; line-height:1.5;">“${main.pullQuote}”</blockquote>
+          <blockquote style="margin:0 0 1.2rem 0; padding:1rem 1.2rem; border-left:3px solid ${brandColor}; background:${brandColor}08; border-radius:0 8px 8px 0; font-size:1.05rem; font-style:italic; color:#333; line-height:1.6;">“${main.pullQuote}”</blockquote>
         ` : ''}
-        <div style="font-size:0.88rem; line-height:1.7; color:#333;">${contentParts[1]}</div>
-        <div style="margin-top:1.2rem; padding:1rem; background:${brandColor}; border-radius:8px; text-align:center;">
-          <a href="${businessUrl}" style="color:white; text-decoration:none; font-weight:600; font-size:0.9rem;">Visit ${businessName} →</a>
+        <div style="font-size:0.95rem; line-height:1.8; color:#333;">${contentParts[1]}</div>
+        <div style="margin-top:1.5rem; padding:1rem 1.2rem; background:${brandColor}; border-radius:8px; text-align:center;">
+          <p style="color:rgba(255,255,255,0.8); font-size:0.75rem; margin:0 0 0.4rem 0;">Ready to get started?</p>
+          <a href="${businessUrl}" style="color:white; text-decoration:none; font-weight:700; font-size:1rem;">Visit ${businessName} →</a>
         </div>
       </div>
     `, undefined, main.keywords);
@@ -381,23 +383,27 @@ function assemblePages(
     addPage('article', article.title, `
       <div style="height:100%; display:flex; flex-direction:column;">
         ${article.imageUrl ? `<img src="${article.imageUrl}" alt="${article.title}" style="width:100%; height:45%; object-fit:cover; border-radius:8px;" />` : `<div style="width:100%;height:30%;background:linear-gradient(135deg, ${brandColor}15, ${brandColor}05);border-radius:8px;display:flex;align-items:center;justify-content:center;"><span style="font-size:2.5rem;font-weight:800;color:${brandColor}30;">${String(idx + 2).padStart(2, '0')}</span></div>`}
-        <div style="flex:1; padding-top:0.8rem;">
-          <p style="text-transform:uppercase; font-size:0.6rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600;">${article.topic}</p>
-          <h2 style="font-size:1.3rem; font-weight:800; color:#111; line-height:1.2; margin:0.3rem 0 0.5rem 0;">${article.title}</h2>
-          <div style="font-size:0.85rem; line-height:1.7; color:#333;">${getFirstNParagraphs(article.content, 3)}</div>
+        <div style="flex:1; padding-top:1rem;">
+          <p style="text-transform:uppercase; font-size:0.65rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600;">${article.topic}</p>
+          <h2 style="font-size:1.4rem; font-weight:800; color:#111; line-height:1.25; margin:0.4rem 0 0.6rem 0;">${article.title}</h2>
+          <div style="font-size:0.92rem; line-height:1.8; color:#333;">${getFirstNParagraphs(article.content, 3)}</div>
         </div>
       </div>
     `, article.imageUrl, article.keywords);
 
-    // Page B: Article continuation + pull quote
+    // Page B: Article continuation + pull quote + CTA
     const remaining = removeFirstNParagraphs(article.content, 3);
     addPage('article', article.title, `
-      <div style="padding:0.5rem;">
-        <p style="text-transform:uppercase; font-size:0.6rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600; margin-bottom:0.5rem;">${article.topic} — Continued</p>
-        <div style="font-size:0.85rem; line-height:1.7; color:#333;">${remaining}</div>
+      <div style="padding:0.8rem;">
+        <p style="text-transform:uppercase; font-size:0.6rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600; margin-bottom:0.8rem;">${article.topic} — Continued</p>
+        <div style="font-size:0.9rem; line-height:1.8; color:#333;">${remaining}</div>
         ${article.pullQuote ? `
-          <blockquote style="margin:1rem 0 0 0; padding:0.8rem 1rem; border-left:3px solid ${brandColor}; background:${brandColor}08; border-radius:0 8px 8px 0; font-size:0.9rem; font-style:italic; color:#444; line-height:1.5;">“${article.pullQuote}”</blockquote>
+          <blockquote style="margin:1.2rem 0; padding:1rem 1.2rem; border-left:3px solid ${brandColor}; background:${brandColor}08; border-radius:0 8px 8px 0; font-size:0.95rem; font-style:italic; color:#444; line-height:1.6;">“${article.pullQuote}”</blockquote>
         ` : ''}
+        <div style="margin-top:1.5rem; padding:0.8rem 1rem; background:${brandColor}0a; border-radius:8px; display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-size:0.8rem; color:#555;">Learn more about <strong>${businessName}</strong></span>
+          <a href="${businessUrl}" style="display:inline-block; padding:0.5rem 1rem; background:${brandColor}; color:white; border-radius:6px; text-decoration:none; font-size:0.8rem; font-weight:600;">Visit Website →</a>
+        </div>
       </div>
     `, undefined, article.keywords);
   });

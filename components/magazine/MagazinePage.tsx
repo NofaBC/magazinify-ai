@@ -10,18 +10,18 @@ export default function MagazinePageComponent({ page }: MagazinePageProps) {
   const isFullBleed = isCover || isBackCover;
 
   return (
-    <div className={`w-full h-full overflow-hidden bg-white flex flex-col ${isFullBleed ? '' : 'p-5'}`}>
+    <div className={`w-full h-full overflow-hidden bg-white flex flex-col ${isFullBleed ? '' : 'p-8'}`}>
       {/* Page content */}
       <div
         className="flex-1 overflow-hidden magazine-content"
-        style={{ fontSize: '0.85rem', lineHeight: '1.65' }}
+        style={{ fontSize: '0.95rem', lineHeight: '1.75' }}
         dangerouslySetInnerHTML={{ __html: page.content }}
       />
 
       {/* Page footer — not on covers */}
       {!isFullBleed && (
-        <div className="mt-auto pt-1.5 flex items-center justify-between text-[10px] text-zinc-300 border-t border-zinc-50">
-          <span>{page.title !== page.content ? '' : ''}</span>
+        <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-zinc-300 border-t border-zinc-100">
+          <span></span>
           <span>Page {page.pageNumber}</span>
         </div>
       )}

@@ -28,13 +28,13 @@ export default function FlipbookViewer({ pages, businessName }: FlipbookViewerPr
       <div className="relative">
         <HTMLFlipBook
           ref={flipBook}
-          width={500}
-          height={650}
+          width={700}
+          height={900}
           size="stretch"
-          minWidth={300}
-          maxWidth={600}
-          minHeight={400}
-          maxHeight={750}
+          minWidth={350}
+          maxWidth={800}
+          minHeight={500}
+          maxHeight={1000}
           showCover={true}
           onFlip={onFlip}
           className="shadow-2xl rounded-lg"
