@@ -316,22 +316,19 @@ function assemblePages(
 
   // ===== PAGE 2: TABLE OF CONTENTS =====
   const tocHtml = articles.map((a, i) => `
-    <div style="display:flex; align-items:baseline; gap:0.5rem; padding:0.6rem 0; border-bottom:1px solid #f0f0f0;">
-      <span style="font-size:1.5rem; font-weight:700; color:${brandColor}; min-width:2rem;">${String(i + 1).padStart(2, '0')}</span>
-      <div>
-        <p style="font-weight:600; font-size:0.95rem; margin:0;">${a.title}</p>
-        <p style="font-size:0.8rem; color:#888; margin:0.2rem 0 0 0;">${a.topic}</p>
-      </div>
+    <div style="display:flex; align-items:baseline; gap:0.4rem; padding:0.35rem 0; border-bottom:1px solid #f4f4f4;">
+      <span style="font-size:1.1rem; font-weight:700; color:${brandColor}; min-width:1.5rem;">${String(i + 1).padStart(2, '0')}</span>
+      <p style="font-weight:600; font-size:0.8rem; margin:0; color:#333;">${a.title}</p>
     </div>
   `).join('');
 
   addPage('toc', 'In This Issue', `
     <div style="padding:0.5rem;">
-      <p style="text-transform:uppercase; font-size:0.7rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600; margin-bottom:0.3rem;">Contents</p>
-      <h2 style="font-size:1.5rem; font-weight:800; color:#111; margin-bottom:1rem;">In This Issue</h2>
+      <p style="text-transform:uppercase; font-size:0.6rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600; margin-bottom:0.2rem;">Contents</p>
+      <h2 style="font-size:1.3rem; font-weight:800; color:#111; margin-bottom:0.6rem;">In This Issue</h2>
       ${tocHtml}
-      <div style="margin-top:1.5rem; padding:1rem; background:${brandColor}0a; border-radius:8px; border-left:3px solid ${brandColor};">
-        <p style="font-size:0.8rem; color:#555; margin:0; line-height:1.5;"><strong>From the Editor:</strong> Welcome to the ${monthName} ${year} edition of <em>${businessName}</em> magazine. Each article is crafted to inform, inspire, and connect you with what matters most.</p>
+      <div style="margin-top:1rem; padding:0.7rem; background:${brandColor}0a; border-radius:6px; border-left:3px solid ${brandColor};">
+        <p style="font-size:0.7rem; color:#555; margin:0; line-height:1.4;"><strong>From the Editor:</strong> Welcome to the ${monthName} ${year} edition of <em>${businessName}</em>.</p>
       </div>
     </div>
   `);
@@ -339,38 +336,36 @@ function assemblePages(
   // ===== MAIN ARTICLE: 3-PAGE SPREAD =====
   const main = articles[0];
   if (main) {
-    // Page 3: Article opener (full image + title)
+    // Page 3: Article opener (image + title only — no body text)
     addPage('article', main.title, `
       <div style="height:100%; display:flex; flex-direction:column;">
-        ${main.imageUrl ? `<img src="${main.imageUrl}" alt="${main.title}" style="width:100%; height:55%; object-fit:cover; border-radius:8px;" />` : ''}
+        ${main.imageUrl ? `<img src="${main.imageUrl}" alt="${main.title}" style="width:100%; height:60%; object-fit:cover; border-radius:8px;" />` : ''}
         <div style="flex:1; display:flex; flex-direction:column; justify-content:center; padding-top:1rem;">
-          <p style="text-transform:uppercase; font-size:0.65rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600;">Feature Story</p>
-          <h2 style="font-size:1.6rem; font-weight:800; color:#111; line-height:1.2; margin:0.3rem 0;">${main.title}</h2>
+          <p style="text-transform:uppercase; font-size:0.6rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600;">Feature Story</p>
+          <h2 style="font-size:1.5rem; font-weight:800; color:#111; line-height:1.2; margin:0.3rem 0;">${main.title}</h2>
           <div style="width:30px; height:3px; background:${brandColor}; margin:0.5rem 0;"></div>
-          <p style="font-size:0.85rem; color:#666; line-height:1.6;">${main.content.match(/<p>(.*?)<\/p>/)?.[1]?.slice(0, 200) ?? ''}...</p>
         </div>
       </div>
     `, main.imageUrl, main.keywords);
 
-    // Page 4: Article body (first half)
-    const contentParts = splitContentInHalf(main.content);
+    // Page 4-5: Article body split into thirds
+    const contentChunks = splitContentIntoChunks(main.content, 3);
     addPage('article', main.title, `
-      <div style="padding:0.8rem;">
-        <p style="text-transform:uppercase; font-size:0.65rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600; margin-bottom:0.8rem;">Feature Story — Continued</p>
-        <div style="font-size:0.95rem; line-height:1.8; color:#333;">${contentParts[0]}</div>
+      <div style="padding:0.5rem;">
+        <p style="text-transform:uppercase; font-size:0.6rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600; margin-bottom:0.5rem;">Feature Story</p>
+        <div style="font-size:0.85rem; line-height:1.7; color:#333;">${contentChunks[0]}</div>
       </div>
     `, undefined, main.keywords);
 
-    // Page 5: Article body (second half) + pull quote + CTA
     addPage('article', main.title, `
-      <div style="padding:0.8rem;">
+      <div style="padding:0.5rem;">
+        <div style="font-size:0.85rem; line-height:1.7; color:#333;">${contentChunks[1]}</div>
         ${main.pullQuote ? `
-          <blockquote style="margin:0 0 1.2rem 0; padding:1rem 1.2rem; border-left:3px solid ${brandColor}; background:${brandColor}08; border-radius:0 8px 8px 0; font-size:1.05rem; font-style:italic; color:#333; line-height:1.6;">“${main.pullQuote}”</blockquote>
+          <blockquote style="margin:1rem 0; padding:0.7rem 1rem; border-left:3px solid ${brandColor}; background:${brandColor}08; border-radius:0 6px 6px 0; font-size:0.9rem; font-style:italic; color:#333; line-height:1.5;">“${main.pullQuote}”</blockquote>
         ` : ''}
-        <div style="font-size:0.95rem; line-height:1.8; color:#333;">${contentParts[1]}</div>
-        <div style="margin-top:1.5rem; padding:1rem 1.2rem; background:${brandColor}; border-radius:8px; text-align:center;">
-          <p style="color:rgba(255,255,255,0.8); font-size:0.75rem; margin:0 0 0.4rem 0;">Ready to get started?</p>
-          <a href="${businessUrl}" style="color:white; text-decoration:none; font-weight:700; font-size:1rem;">Visit ${businessName} →</a>
+        ${contentChunks[2] ? `<div style="font-size:0.85rem; line-height:1.7; color:#333;">${contentChunks[2]}</div>` : ''}
+        <div style="margin-top:1rem; padding:0.7rem 1rem; background:${brandColor}; border-radius:6px; text-align:center;">
+          <a href="${businessUrl}" style="color:white; text-decoration:none; font-weight:700; font-size:0.85rem;">Visit ${businessName} →</a>
         </div>
       </div>
     `, undefined, main.keywords);
@@ -379,30 +374,29 @@ function assemblePages(
   // ===== SUPPORTING ARTICLES: 2-PAGE SPREADS =====
   const supporting = articles.slice(1);
   supporting.forEach((article, idx) => {
-    // Page A: Image opener + article start
+    // Page A: Image + title + first 2 paragraphs only
     addPage('article', article.title, `
       <div style="height:100%; display:flex; flex-direction:column;">
-        ${article.imageUrl ? `<img src="${article.imageUrl}" alt="${article.title}" style="width:100%; height:45%; object-fit:cover; border-radius:8px;" />` : `<div style="width:100%;height:30%;background:linear-gradient(135deg, ${brandColor}15, ${brandColor}05);border-radius:8px;display:flex;align-items:center;justify-content:center;"><span style="font-size:2.5rem;font-weight:800;color:${brandColor}30;">${String(idx + 2).padStart(2, '0')}</span></div>`}
-        <div style="flex:1; padding-top:1rem;">
-          <p style="text-transform:uppercase; font-size:0.65rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600;">${article.topic}</p>
-          <h2 style="font-size:1.4rem; font-weight:800; color:#111; line-height:1.25; margin:0.4rem 0 0.6rem 0;">${article.title}</h2>
-          <div style="font-size:0.92rem; line-height:1.8; color:#333;">${getFirstNParagraphs(article.content, 3)}</div>
+        ${article.imageUrl ? `<img src="${article.imageUrl}" alt="${article.title}" style="width:100%; height:45%; object-fit:cover; border-radius:8px;" />` : `<div style="width:100%;height:25%;background:linear-gradient(135deg, ${brandColor}15, ${brandColor}05);border-radius:8px;display:flex;align-items:center;justify-content:center;"><span style="font-size:2rem;font-weight:800;color:${brandColor}30;">${String(idx + 2).padStart(2, '0')}</span></div>`}
+        <div style="flex:1; padding-top:0.8rem;">
+          <p style="text-transform:uppercase; font-size:0.6rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600;">${article.topic}</p>
+          <h2 style="font-size:1.2rem; font-weight:800; color:#111; line-height:1.2; margin:0.3rem 0 0.4rem 0;">${article.title}</h2>
+          <div style="font-size:0.82rem; line-height:1.65; color:#333;">${getFirstNParagraphs(article.content, 2)}</div>
         </div>
       </div>
     `, article.imageUrl, article.keywords);
 
-    // Page B: Article continuation + pull quote + CTA
-    const remaining = removeFirstNParagraphs(article.content, 3);
+    // Page B: Remaining content + pull quote + CTA
+    const remaining = removeFirstNParagraphs(article.content, 2);
     addPage('article', article.title, `
-      <div style="padding:0.8rem;">
-        <p style="text-transform:uppercase; font-size:0.6rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600; margin-bottom:0.8rem;">${article.topic} — Continued</p>
-        <div style="font-size:0.9rem; line-height:1.8; color:#333;">${remaining}</div>
+      <div style="padding:0.5rem;">
+        <p style="text-transform:uppercase; font-size:0.55rem; letter-spacing:0.15em; color:${brandColor}; font-weight:600; margin-bottom:0.5rem;">${article.topic} — Continued</p>
+        <div style="font-size:0.82rem; line-height:1.65; color:#333;">${remaining}</div>
         ${article.pullQuote ? `
-          <blockquote style="margin:1.2rem 0; padding:1rem 1.2rem; border-left:3px solid ${brandColor}; background:${brandColor}08; border-radius:0 8px 8px 0; font-size:0.95rem; font-style:italic; color:#444; line-height:1.6;">“${article.pullQuote}”</blockquote>
+          <blockquote style="margin:0.8rem 0; padding:0.6rem 0.8rem; border-left:3px solid ${brandColor}; background:${brandColor}08; border-radius:0 6px 6px 0; font-size:0.82rem; font-style:italic; color:#444; line-height:1.5;">“${article.pullQuote}”</blockquote>
         ` : ''}
-        <div style="margin-top:1.5rem; padding:0.8rem 1rem; background:${brandColor}0a; border-radius:8px; display:flex; align-items:center; justify-content:space-between;">
-          <span style="font-size:0.8rem; color:#555;">Learn more about <strong>${businessName}</strong></span>
-          <a href="${businessUrl}" style="display:inline-block; padding:0.5rem 1rem; background:${brandColor}; color:white; border-radius:6px; text-decoration:none; font-size:0.8rem; font-weight:600;">Visit Website →</a>
+        <div style="margin-top:0.8rem; padding:0.5rem 0.8rem; background:${brandColor}; border-radius:6px; text-align:center;">
+          <a href="${businessUrl}" style="color:white; text-decoration:none; font-weight:600; font-size:0.75rem;">Visit ${businessName} →</a>
         </div>
       </div>
     `, undefined, article.keywords);
@@ -439,10 +433,16 @@ function assemblePages(
 
 // ── Content splitting helpers ─────────────────────────────
 
-function splitContentInHalf(html: string): [string, string] {
+/** Split HTML content into N roughly-equal chunks by block elements */
+function splitContentIntoChunks(html: string, chunks: number): string[] {
   const tags = html.match(/<(p|h[2-4]|ul|ol|blockquote|li)[^>]*>[\s\S]*?<\/\1>/g) ?? [html];
-  const mid = Math.ceil(tags.length / 2);
-  return [tags.slice(0, mid).join(''), tags.slice(mid).join('')];
+  const result: string[] = [];
+  const perChunk = Math.max(1, Math.ceil(tags.length / chunks));
+  for (let i = 0; i < chunks; i++) {
+    const slice = tags.slice(i * perChunk, (i + 1) * perChunk).join('');
+    if (slice) result.push(slice);
+  }
+  return result;
 }
 
 function getFirstNParagraphs(html: string, n: number): string {

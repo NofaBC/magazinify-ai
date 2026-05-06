@@ -14,7 +14,7 @@ export default function MagazinePageComponent({ page }: MagazinePageProps) {
       {/* Page content */}
       <div
         className="flex-1 overflow-hidden magazine-content"
-        style={{ fontSize: '0.95rem', lineHeight: '1.75' }}
+        style={{ fontSize: '0.8rem', lineHeight: '1.6' }}
         dangerouslySetInnerHTML={{ __html: page.content }}
       />
 
