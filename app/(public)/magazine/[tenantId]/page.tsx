@@ -2,16 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { getIssue, listIssues } from '@/lib/services/firestore';
 import { getCurrentYearMonth } from '@/lib/utils/validation';
+import FlipbookViewer from '@/components/magazine/FlipbookViewer';
 import type { MagazineIssue } from '@/types/magazine';
-
-// Dynamic import to avoid SSR issues with react-pageflip
-const FlipbookViewer = dynamic(
-  () => import('@/components/magazine/FlipbookViewer'),
-  { ssr: false }
-);
 
 export default function PublicMagazinePage() {
   const params = useParams();

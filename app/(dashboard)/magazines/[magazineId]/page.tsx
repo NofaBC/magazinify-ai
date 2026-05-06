@@ -1,16 +1,11 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ExternalLink, ArrowLeft } from 'lucide-react';
 import { useTenant } from '@/hooks/useTenant';
 import { useMagazineIssue } from '@/hooks/useMagazine';
-
-const FlipbookViewer = dynamic(
-  () => import('@/components/magazine/FlipbookViewer'),
-  { ssr: false }
-);
+import FlipbookViewer from '@/components/magazine/FlipbookViewer';
 
 export default function MagazineViewPage() {
   const params = useParams();
@@ -70,9 +65,7 @@ export default function MagazineViewPage() {
         )}
       </div>
 
-      <div className="bg-white rounded-xl border border-zinc-200 p-6">
-        <FlipbookViewer pages={issue.pages} businessName={issue.businessName} />
-      </div>
+      <FlipbookViewer pages={issue.pages} businessName={issue.businessName} />
     </div>
   );
 }

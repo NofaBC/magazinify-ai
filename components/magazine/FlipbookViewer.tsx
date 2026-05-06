@@ -1,8 +1,7 @@
 'use client';
 
-import { useRef, useCallback, useState } from 'react';
-import HTMLFlipBook from 'react-pageflip';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import type { MagazinePage } from '@/types/magazine';
 import MagazinePageComponent from './MagazinePage';
 
@@ -12,75 +11,79 @@ interface FlipbookViewerProps {
 }
 
 export default function FlipbookViewer({ pages, businessName }: FlipbookViewerProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const flipBook = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
 
-  const onFlip = useCallback((e: { data: number }) => {
-    setCurrentPage(e.data);
-  }, []);
+  const scrollToPage = useCallback((index: number) => {
+    if (index < 0 || index >= pages.length) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const pageEl = container.children[index] as HTMLElement;
+    if (pageEl) {
+      pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setCurrentPage(index);
+    }
+  }, [pages.length]);
 
-  const goNext = () => flipBook.current?.pageFlip()?.flipNext();
-  const goPrev = () => flipBook.current?.pageFlip()?.flipPrev();
+  // Track current page on scroll
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = Number(entry.target.getAttribute('data-page-index'));
+            if (!isNaN(idx)) setCurrentPage(idx);
+          }
+        });
+      },
+      { root: null, threshold: 0.5 }
+    );
+
+    Array.from(container.children).forEach((child) => observer.observe(child));
+    return () => observer.disconnect();
+  }, [pages]);
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="relative">
-        <HTMLFlipBook
-          ref={flipBook}
-          width={700}
-          height={900}
-          size="stretch"
-          minWidth={350}
-          maxWidth={800}
-          minHeight={500}
-          maxHeight={1000}
-          showCover={true}
-          onFlip={onFlip}
-          className="shadow-2xl rounded-lg"
-          style={{}}
-          startPage={0}
-          drawShadow={true}
-          flippingTime={600}
-          usePortrait={true}
-          startZIndex={0}
-          autoSize={true}
-          maxShadowOpacity={0.5}
-          mobileScrollSupport={true}
-          clickEventForward={true}
-          useMouseEvents={true}
-          swipeDistance={30}
-          showPageCorners={true}
-          disableFlipByClick={false}
-        >
-          {pages.map((page) => (
-            <div key={page.pageNumber} className="bg-white">
-              <MagazinePageComponent page={page} />
-            </div>
-          ))}
-        </HTMLFlipBook>
+    <div className="relative">
+      {/* Magazine pages */}
+      <div ref={containerRef} className="space-y-4 max-w-3xl mx-auto">
+        {pages.map((page, idx) => (
+          <div
+            key={page.pageNumber}
+            data-page-index={idx}
+            className="bg-white rounded-xl shadow-lg overflow-hidden"
+            style={{ minHeight: '85vh' }}
+          >
+            <MagazinePageComponent page={page} />
+          </div>
+        ))}
       </div>
 
-      {/* Navigation */}
-      <div className="flex items-center gap-4">
+      {/* Fixed navigation bar */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm border border-zinc-200 rounded-full shadow-lg px-4 py-2 flex items-center gap-3 z-50">
         <button
-          onClick={goPrev}
+          onClick={() => scrollToPage(currentPage - 1)}
           disabled={currentPage === 0}
-          className="p-2 rounded-full border border-zinc-200 hover:bg-zinc-50 transition-colors disabled:opacity-30"
+          className="p-1.5 rounded-full hover:bg-zinc-100 transition-colors disabled:opacity-30"
           aria-label="Previous page"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronUp className="w-4 h-4" />
         </button>
-        <span className="text-sm text-zinc-500 min-w-[80px] text-center">
-          Page {currentPage + 1} of {pages.length}
+
+        <span className="text-xs text-zinc-500 min-w-[70px] text-center font-medium">
+          {currentPage + 1} / {pages.length}
         </span>
+
         <button
-          onClick={goNext}
+          onClick={() => scrollToPage(currentPage + 1)}
           disabled={currentPage >= pages.length - 1}
-          className="p-2 rounded-full border border-zinc-200 hover:bg-zinc-50 transition-colors disabled:opacity-30"
+          className="p-1.5 rounded-full hover:bg-zinc-100 transition-colors disabled:opacity-30"
           aria-label="Next page"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronDown className="w-4 h-4" />
         </button>
       </div>
     </div>
