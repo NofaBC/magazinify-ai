@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { getIssue, listIssues } from '@/lib/services/firestore';
 import { getCurrentYearMonth } from '@/lib/utils/validation';
 import FlipbookViewer from '@/components/magazine/FlipbookViewer';
 import type { MagazineIssue } from '@/types/magazine';
@@ -24,14 +23,16 @@ export default function PublicMagazinePage() {
 
         // If no specific issue requested, get the latest published one
         if (!yearMonth) {
-          const issues = await listIssues(tenantId, 1);
-          const latest = issues.find((i) => i.status === 'published');
+          const res = await fetch(`/api/issues?tenantId=${tenantId}`);
+          const data = await res.json();
+          const latest = (data.issues ?? []).find((i: MagazineIssue) => i.status === 'published');
           yearMonth = latest?.yearMonth ?? getCurrentYearMonth();
         }
 
-        const data = await getIssue(tenantId, yearMonth);
-        if (data && data.status === 'published') {
-          setIssue(data);
+        const res = await fetch(`/api/issues?tenantId=${tenantId}&yearMonth=${yearMonth}`);
+        const data = await res.json();
+        if (data.issue && data.issue.status === 'published') {
+          setIssue(data.issue);
         } else {
           setError('This issue is not available yet.');
         }

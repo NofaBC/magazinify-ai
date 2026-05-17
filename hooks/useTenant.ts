@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { onAuth } from '@/lib/services/auth';
-import { getTenant } from '@/lib/services/firestore';
 import type { Tenant } from '@/types/tenant';
 import type { User } from 'firebase/auth';
 
@@ -15,8 +14,17 @@ export function useTenant() {
     const unsub = onAuth(async (u) => {
       setUser(u);
       if (u) {
-        const t = await getTenant(u.uid);
-        setTenant(t);
+        try {
+          const res = await fetch(`/api/tenant?tenantId=${u.uid}`);
+          if (res.ok) {
+            const data = await res.json();
+            setTenant(data.tenant);
+          } else {
+            setTenant(null);
+          }
+        } catch {
+          setTenant(null);
+        }
       } else {
         setTenant(null);
       }

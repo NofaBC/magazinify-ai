@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getIssue, listIssues } from '@/lib/services/firestore';
 import type { MagazineIssue } from '@/types/magazine';
 
 export function useMagazineIssue(tenantId: string, yearMonth: string) {
@@ -10,8 +9,10 @@ export function useMagazineIssue(tenantId: string, yearMonth: string) {
 
   useEffect(() => {
     if (!tenantId || !yearMonth) return;
-    getIssue(tenantId, yearMonth)
-      .then(setIssue)
+    fetch(`/api/issues?tenantId=${tenantId}&yearMonth=${yearMonth}`)
+      .then((res) => res.json())
+      .then((data) => setIssue(data.issue ?? null))
+      .catch(() => setIssue(null))
       .finally(() => setLoading(false));
   }, [tenantId, yearMonth]);
 
@@ -24,8 +25,10 @@ export function useMagazineList(tenantId: string) {
 
   useEffect(() => {
     if (!tenantId) return;
-    listIssues(tenantId)
-      .then(setIssues)
+    fetch(`/api/issues?tenantId=${tenantId}`)
+      .then((res) => res.json())
+      .then((data) => setIssues(data.issues ?? []))
+      .catch(() => setIssues([]))
       .finally(() => setLoading(false));
   }, [tenantId]);
 
