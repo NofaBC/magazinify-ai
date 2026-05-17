@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useTenant } from '@/hooks/useTenant';
-import { updateTenant } from '@/lib/services/firestore';
 
 export default function SettingsPage() {
   const { tenant } = useTenant();
@@ -32,20 +31,35 @@ export default function SettingsPage() {
     setSaving(true);
     setSaved(false);
 
-    await updateTenant(tenant.id, {
-      businessName,
-      businessUrl,
-      brandPreferences: {
-        ...tenant.brandPreferences,
-        tagline,
-        tone: tone as 'professional' | 'casual' | 'friendly' | 'authoritative',
-        primaryColor,
-      },
-    });
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: tenant.id,
+          businessName,
+          businessUrl,
+          brandPreferences: {
+            ...tenant.brandPreferences,
+            tagline,
+            tone,
+            primaryColor,
+          },
+        }),
+      });
 
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Save failed');
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error('Settings save failed:', err);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
